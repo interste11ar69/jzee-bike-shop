@@ -2,111 +2,97 @@ import React from "react";
 
 const Footer = () => {
   return (
-    <footer className="bg-zinc-950 text-white pt-20 pb-10 border-t border-zinc-900">
+    <footer className="bg-black text-white pt-20 pb-10 border-t border-zinc-900">
       <div className="container mx-auto px-6 md:px-12">
-        {/* TOP SECTION: COLUMNS */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-16">
-          {/* BRAND COLUMN */}
-          <div className="col-span-2 md:col-span-1">
-            <h2 className="text-2xl font-black uppercase italic mb-6">
-              JZEE<span className="text-jzee-green">.BIKE</span>
+        <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-16">
+          {/* LEFT: THE HQ INFO */}
+          <div className="max-w-md">
+            {/* 
+                NAME UPDATE: Stacked for impact. 
+                "BIKE SHOP" in Green to make it pop.
+            */}
+            <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-[0.9] mb-8">
+              JZEE
+              <br />
+              <span className="text-jzee-green">BIKE SHOP</span>
             </h2>
-            <p className="text-zinc-500 text-sm leading-relaxed mb-6">
-              The South's premier destination for high-performance cycling
-              components. Authorized dealer for Shimano, SRAM, and Fox.
-            </p>
-            <div className="flex gap-4">
-              {/* Social Placeholders */}
-              <div className="w-8 h-8 bg-zinc-800 rounded-full flex items-center justify-center hover:bg-jzee-green hover:text-black transition-colors cursor-pointer">
-                FB
+
+            <div className="space-y-6 text-sm uppercase tracking-widest text-zinc-400">
+              <div>
+                <p className="text-white font-bold mb-1">Visit The Garage</p>
+                <p>B21 L8 Ph4B Gentian St.</p>
+                <p>El Rio Vista Subd., Davao City</p>
               </div>
-              <div className="w-8 h-8 bg-zinc-800 rounded-full flex items-center justify-center hover:bg-jzee-green hover:text-black transition-colors cursor-pointer">
-                IG
+
+              {/* HOURS UPDATE: The "Grind" Schedule */}
+              <div>
+                <p className="text-white font-bold mb-1">Operating Hours</p>
+                <p className="text-white">Daily: Morning - Midnight</p>
+                <p className="text-jzee-green font-bold">Open on Holidays</p>
               </div>
             </div>
           </div>
 
-          {/* SHOP COLUMN */}
-          <div>
-            <h3 className="font-bold uppercase tracking-widest mb-6 text-sm">
-              Products
+          {/* RIGHT: THE FINAL CTA */}
+          <div className="w-full md:w-auto flex flex-col items-start md:items-end">
+            <h3 className="font-bold uppercase tracking-widest mb-6 text-sm text-white">
+              Got Questions?
             </h3>
-            <ul className="space-y-4 text-zinc-400 text-sm">
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Framesets
-              </li>
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Groupsets
-              </li>
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Wheelsets
-              </li>
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Apparel
-              </li>
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Sale Items
-              </li>
-            </ul>
-          </div>
 
-          {/* SUPPORT COLUMN (The "Trust" Builder) */}
-          <div>
-            <h3 className="font-bold uppercase tracking-widest mb-6 text-sm">
-              Support
-            </h3>
-            <ul className="space-y-4 text-zinc-400 text-sm">
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Shipping Policy
-              </li>
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Warranty Claims
-              </li>
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Crash Replacement
-              </li>
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Bike Fitting
-              </li>
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Contact Us
-              </li>
-            </ul>
-          </div>
+            {/* BIG MESSAGE BUTTON */}
+            <a
+              href="https://m.me/100063770933795"
+              target="_blank"
+              rel="noreferrer"
+              className="group flex items-center gap-4 bg-white text-black px-8 py-4 font-black uppercase tracking-widest hover:bg-jzee-green transition-all mb-8"
+            >
+              <span>Chat on Messenger</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="group-hover:translate-x-1 transition-transform"
+              >
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+              </svg>
+            </a>
 
-          {/* NEWSLETTER (Shimano Style) */}
-          <div>
-            <h3 className="font-bold uppercase tracking-widest mb-6 text-sm">
-              Stay Connected
-            </h3>
-            <p className="text-zinc-500 text-xs mb-4">
-              Get the latest drops and local race news.
-            </p>
-            <div className="flex">
-              <input
-                type="email"
-                placeholder="EMAIL ADDRESS"
-                className="bg-zinc-900 border border-zinc-800 text-white px-4 py-2 text-xs w-full focus:outline-none focus:border-jzee-green"
-              />
-              <button className="bg-white text-black px-4 py-2 text-xs font-bold uppercase hover:bg-jzee-green transition-colors">
-                Join
-              </button>
+            {/* SOCIAL ICONS - Removed IG, kept FB */}
+            <div className="flex gap-4">
+              <a
+                href="https://www.facebook.com/profile.php?id=100063770933795"
+                target="_blank"
+                rel="noreferrer"
+                className="w-12 h-12 border border-zinc-800 flex items-center justify-center hover:bg-white hover:text-black hover:border-white transition-all"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                </svg>
+              </a>
             </div>
           </div>
         </div>
 
-        {/* BOTTOM BAR (Fox Style) */}
-        <div className="border-t border-zinc-900 pt-8 flex flex-col md:flex-row justify-between items-center text-[10px] text-zinc-600 uppercase tracking-widest">
-          <p>© 2026 JZEE BIKE SHOP DAVAO. ALL RIGHTS RESERVED.</p>
-          <div className="flex gap-6 mt-4 md:mt-0">
-            <span className="hover:text-white cursor-pointer">
-              Privacy Policy
-            </span>
-            <span className="hover:text-white cursor-pointer">
-              Terms of Service
-            </span>
-            <span className="hover:text-white cursor-pointer">Sitemap</span>
-          </div>
+        {/* BOTTOM BAR */}
+        <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-zinc-900 text-zinc-600 text-[10px] uppercase tracking-widest">
+          <p>© 2026 JZEE BIKE SHOP. DAVAO CITY.</p>
+          <p className="mt-2 md:mt-0">Built for Speed.</p>
         </div>
       </div>
     </footer>

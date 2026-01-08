@@ -2,56 +2,54 @@ import React from "react";
 
 const Navbar = () => {
   return (
-    // 1. FLUSH BACKGROUND: "bg-gradient-to-b" fades from black to transparent. No hard lines.
-    <nav className="fixed top-0 left-0 w-full z-50 bg-gradient-to-b from-black/90 to-transparent text-white pb-10">
-      {/* TOP BAR (Global) */}
-      <div className="px-6 py-2 flex justify-between items-center text-[10px] uppercase tracking-widest text-zinc-400 border-b border-white/5">
-        <div className="flex gap-4">
-          <span>Philippines</span>
-          <span>Global</span>
-        </div>
-        <div className="flex gap-4">
-          <span>Dealer Locator</span>
-        </div>
-      </div>
-
-      {/* MAIN NAV */}
-      <div className="px-6 md:px-10 py-4 flex justify-between items-center">
-        {/* LEFT: LOGO TEXT (Matches Hero Exactly) */}
-        <div className="flex items-center gap-3">
+    // 🛠️ THE FIX: Gradient background instead of solid black.
+    // "from-black/90 to-transparent" creates a subtle shadow so text is readable,
+    // but the image flows underneath it.
+    <nav className="fixed top-0 left-0 w-full z-50 bg-gradient-to-b from-black/90 to-transparent text-white">
+      {/* MAIN NAV CONTAINER */}
+      <div className="px-6 md:px-12 h-24 flex justify-between items-center">
+        {/* LEFT: LOGO & NAME */}
+        <div
+          className="flex items-center gap-3 cursor-pointer"
+          onClick={() => window.scrollTo(0, 0)}
+        >
           <img
             src="/logo.png"
             alt="Jzee"
             className="h-12 w-12 rounded-full border-2 border-white/10"
           />
-          <span className="text-2xl font-black italic uppercase tracking-tighter leading-none">
-            JZEE<span className="text-jzee-green">.BIKE</span>
-          </span>
+          <div className="flex flex-col leading-none drop-shadow-md">
+            <span className="font-black text-2xl tracking-tighter uppercase italic">
+              JZEE<span className="text-jzee-green"> BIKE</span>
+            </span>
+            <span className="text-[10px] font-bold tracking-[0.3em] text-zinc-300 uppercase">
+              Shop
+            </span>
+          </div>
         </div>
 
-        {/* CENTER: LINKS (Now matching the Hero Style) 
-            Changed from 'tracking-widest' to 'italic font-black tracking-tight'
-        */}
-        <div className="hidden md:flex gap-8 text-lg font-black italic uppercase tracking-tight">
-          {["MTB", "Road", "Gravel", "E-Bike", "Apparel"].map((item) => (
-            <a
+        {/* CENTER: FUNCTIONAL LINKS */}
+        <div className="hidden md:flex gap-10 text-sm font-black uppercase tracking-widest drop-shadow-md">
+          {["INVENTORY", "MECHANIC", "LOCATION"].map((item) => (
+            <button
               key={item}
-              href="#"
-              className="relative group hover:text-jzee-green transition-colors"
+              className="relative group overflow-hidden hover:text-jzee-green transition-colors"
             >
-              {item}
-            </a>
+              <span className="relative z-10">{item}</span>
+              <span className="absolute bottom-0 left-0 w-full h-[2px] bg-jzee-green -translate-x-full group-hover:translate-x-0 transition-transform duration-300"></span>
+            </button>
           ))}
         </div>
 
-        {/* RIGHT: ICONS */}
+        {/* RIGHT: ACTION BUTTONS */}
         <div className="flex items-center gap-6">
-          <button className="hover:text-jzee-green transition-colors">
+          {/* Search Icon */}
+          <button className="hover:text-jzee-green transition-colors drop-shadow-md">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
-              strokeWidth={2.5}
+              strokeWidth={2}
               stroke="currentColor"
               className="w-6 h-6"
             >
@@ -62,22 +60,16 @@ const Navbar = () => {
               />
             </svg>
           </button>
-          <button className="hover:text-jzee-green transition-colors">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2.5}
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
-              />
-            </svg>
-          </button>
+
+          {/* MESSAGE BUTTON - Solid White Block for Contrast */}
+          <a
+            href="https://m.me/100063770933795"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden md:block bg-white text-black px-6 py-3 text-xs font-black uppercase hover:bg-jzee-green transition-colors shadow-lg"
+          >
+            Message Us
+          </a>
         </div>
       </div>
     </nav>

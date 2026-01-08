@@ -37,7 +37,7 @@ const Hero = () => {
 
           <div className="flex flex-col md:flex-row items-start md:items-center gap-8 border-t border-white/30 pt-8">
             <button className="bg-white text-black px-10 py-4 font-bold uppercase tracking-widest hover:bg-jzee-green hover:text-black border border-white hover:border-jzee-green transition-all duration-300">
-              View Inventory
+              Browse Catalog
             </button>
 
             {/* NATIONWIDE SHIPPING FLEX */}
