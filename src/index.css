@@ -1,10 +1,25 @@
+/* 👇 1. RESTORE THIS LINE TO FIX THE WEBSITE LAYOUT */
 @import "tailwindcss";
 
-/* 
-   🌑 THE CONCRETE TEXTURE 
-   Adds a subtle static noise to the background. 
-   Makes it feel less "Tech" and more "Street".
-*/
+/* 👇 2. MANUALLY ADD THE MISSING STYLES HERE so the Marquee works */
+.bg-jzee-green {
+  background-color: #22c55e;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 25s linear infinite;
+}
+
+/* 👇 3. YOUR CONCRETE TEXTURE (Keep this exactly as is) */
 body::before {
   content: "";
   position: fixed;

@@ -17,15 +17,26 @@ const brands = [
 
 const Brands = () => {
   return (
-    // Placed between Hero and Catalog.
-    // z-20 ensures it sits above the hero image bottom edge if needed.
-    <div className="bg-jzee-green py-3 overflow-hidden border-y border-black relative z-20">
-      {/* The Animation Wrapper */}
-      <div className="flex animate-marquee whitespace-nowrap">
-        {/* We repeat the list 4 times to make the loop seamless */}
-        {[...brands, ...brands, ...brands, ...brands].map((brand, index) => (
+    <div className="bg-jzee-green py-3 border-y border-black relative z-20 overflow-hidden flex">
+      {/* 👇 FIXED: Added 'shrink-0' 
+         This forces the list to stay full width and prevents the overlapping/squishing.
+      */}
+      <div className="flex animate-marquee whitespace-nowrap min-w-full shrink-0 items-center">
+        {brands.map((brand, index) => (
           <span
             key={index}
+            className="text-black font-black italic text-xl mx-8 uppercase tracking-widest"
+          >
+            {brand}
+          </span>
+        ))}
+      </div>
+
+      {/* 👇 FIXED: Added 'shrink-0' here too */}
+      <div className="flex animate-marquee whitespace-nowrap min-w-full shrink-0 items-center">
+        {brands.map((brand, index) => (
+          <span
+            key={`dup-${index}`}
             className="text-black font-black italic text-xl mx-8 uppercase tracking-widest"
           >
             {brand}
