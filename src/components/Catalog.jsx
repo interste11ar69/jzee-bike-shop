@@ -216,13 +216,25 @@ const allItems = [
   },
 ];
 
-const Catalog = () => {
+// 🛠️ ACCEPT THE PROP 'searchTerm'
+const Catalog = ({ searchTerm }) => {
   const [activeCategory, setActiveCategory] = useState("All");
 
-  const filteredItems =
-    activeCategory === "All"
-      ? allItems
-      : allItems.filter((item) => item.category === activeCategory);
+  // 🧠 SUPER FILTER LOGIC
+  const filteredItems = allItems.filter((item) => {
+    // 1. Check Category
+    const matchesCategory =
+      activeCategory === "All" || item.category === activeCategory;
+
+    // 2. Check Search Text (Case insensitive)
+    // If searchTerm is empty, this is always true
+    const matchesSearch = item.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+
+    // 3. Return items that match BOTH
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <section
@@ -235,85 +247,97 @@ const Catalog = () => {
           The <span className="text-jzee-green">Vault</span>
         </h2>
 
-        {/* FILTER TABS */}
-        <div className="flex gap-4 overflow-x-auto p-4 scrollbar-hide">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-6 py-2 text-sm font-bold uppercase tracking-widest border transition-all whitespace-nowrap ${
-                activeCategory === cat
-                  ? "bg-[#22c55e] text-black border-[#22c55e] shadow-[0_0_15px_rgba(34,197,94,0.5)]"
-                  : "bg-transparent text-zinc-500 border-zinc-800 hover:border-white hover:text-white"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        {/* 
+           If searching, show a message instead of tabs.
+           If not searching, show tabs.
+        */}
+        {searchTerm ? (
+          <p className="text-zinc-400 text-sm uppercase tracking-widest">
+            Searching for:{" "}
+            <span className="text-white font-bold">"{searchTerm}"</span>
+          </p>
+        ) : (
+          <div className="flex gap-4 overflow-x-auto p-4 scrollbar-hide">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`px-6 py-2 text-sm font-bold uppercase tracking-widest border transition-all whitespace-nowrap ${
+                  activeCategory === cat
+                    ? "bg-[#22c55e] text-black border-[#22c55e] shadow-[0_0_15px_rgba(34,197,94,0.5)]"
+                    : "bg-transparent text-zinc-500 border-zinc-800 hover:border-white hover:text-white"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* GRID */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-        {filteredItems.map((item) => (
-          <motion.div
-            key={item.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="group relative bg-zinc-900 border border-zinc-800 hover:border-jzee-green transition-all"
-          >
-            {/* IMAGE */}
-            <div className="aspect-square overflow-hidden relative">
-              <img
-                src={item.image}
-                alt={item.name}
-                className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${
-                  item.status === "Sold Out" ? "grayscale opacity-50" : ""
-                }`}
-              />
-
-              {/* STATUS BADGE */}
-              <div
-                className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-1 uppercase ${
-                  item.status === "Available" || item.status === "In Stock"
-                    ? "bg-jzee-green text-black"
-                    : item.status === "Dream Build" || item.status === "Premium"
-                    ? "bg-white text-black"
-                    : "bg-zinc-800 text-white border border-zinc-600"
-                }`}
-              >
-                {item.status}
-              </div>
-            </div>
-
-            {/* INFO */}
-            <div className="p-4">
-              <p className="text-zinc-500 text-[10px] uppercase tracking-widest mb-1">
-                {item.category}
-              </p>
-              <h3 className="text-sm md:text-lg font-bold text-white uppercase leading-tight mb-3">
-                {item.name}
-              </h3>
-
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
-                <span className="text-white font-mono text-sm">
-                  {item.price}
-                </span>
-
-                {/* INQUIRE BUTTON */}
-                <a
-                  href="https://m.me/100063770933795"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-[10px] font-bold uppercase bg-white text-black px-3 py-1 hover:bg-jzee-green transition-colors w-full md:w-auto text-center"
+        {filteredItems.length > 0 ? (
+          filteredItems.map((item) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="group relative bg-zinc-900 border border-zinc-800 hover:border-jzee-green transition-all"
+            >
+              {/* ... (Keep Image and Info code exactly the same) ... */}
+              <div className="aspect-square overflow-hidden relative">
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${
+                    item.status === "Sold Out" ? "grayscale opacity-50" : ""
+                  }`}
+                />
+                <div
+                  className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-1 uppercase ${
+                    item.status === "Available" || item.status === "In Stock"
+                      ? "bg-jzee-green text-black"
+                      : item.status === "Dream Build" ||
+                        item.status === "Premium"
+                      ? "bg-white text-black"
+                      : "bg-zinc-800 text-white border border-zinc-600"
+                  }`}
                 >
-                  Inquire
-                </a>
+                  {item.status}
+                </div>
               </div>
-            </div>
-          </motion.div>
-        ))}
+
+              <div className="p-4">
+                <p className="text-zinc-500 text-[10px] uppercase tracking-widest mb-1">
+                  {item.category}
+                </p>
+                <h3 className="text-sm md:text-lg font-bold text-white uppercase leading-tight mb-3">
+                  {item.name}
+                </h3>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+                  <span className="text-white font-mono text-sm">
+                    {item.price}
+                  </span>
+                  <a
+                    href="https://m.me/100063770933795"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] font-bold uppercase bg-white text-black px-3 py-1 hover:bg-jzee-green transition-colors w-full md:w-auto text-center"
+                  >
+                    Inquire
+                  </a>
+                </div>
+              </div>
+            </motion.div>
+          ))
+        ) : (
+          // EMPTY STATE (If search finds nothing)
+          <div className="col-span-full text-center py-20 text-zinc-500">
+            <p className="uppercase tracking-widest">No items found.</p>
+          </div>
+        )}
       </div>
     </section>
   );
