@@ -1,13 +1,33 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 const Navbar = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // 🧠 SCROLL LISTENER
+  // Detects if the user has scrolled down more than 50px
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    // 🛠️ THE FIX: Gradient background instead of solid black.
-    // "from-black/90 to-transparent" creates a subtle shadow so text is readable,
-    // but the image flows underneath it.
-    <nav className="fixed top-0 left-0 w-full z-50 bg-gradient-to-b from-black/90 to-transparent text-white">
+    <nav
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+        isScrolled
+          ? "bg-black/95 border-b border-zinc-800 py-2" // Scrolled: Compact & Solid Black
+          : "bg-gradient-to-b from-black/90 to-transparent py-4" // Top: Transparent & Tall
+      }`}
+    >
       {/* MAIN NAV CONTAINER */}
-      <div className="px-6 md:px-12 h-24 flex justify-between items-center">
+      <div className="px-6 md:px-12 flex justify-between items-center">
         {/* LEFT: LOGO & NAME */}
         <div
           className="flex items-center gap-3 cursor-pointer"
@@ -16,23 +36,24 @@ const Navbar = () => {
           <img
             src="/logo.png"
             alt="Jzee"
-            className="h-12 w-12 rounded-full border-2 border-white/10"
+            className="h-10 w-10 rounded-full border-2 border-white/10"
           />
           <div className="flex flex-col leading-none drop-shadow-md">
-            <span className="font-black text-2xl tracking-tighter uppercase italic">
-              JZEE<span className="text-jzee-green"> BIKE</span>
-            </span>
-            <span className="text-[10px] font-bold tracking-[0.3em] text-zinc-300 uppercase">
-              Shop
+            <span className="font-black text-xl tracking-tighter uppercase italic text-white">
+              JZEE<span className="text-jzee-green"></span>
             </span>
           </div>
         </div>
 
         {/* CENTER: FUNCTIONAL LINKS */}
-        <div className="hidden md:flex gap-10 text-sm font-black uppercase tracking-widest drop-shadow-md">
+        <div className="hidden md:flex gap-8 text-sm font-black uppercase tracking-widest text-white drop-shadow-md">
           {["INVENTORY", "MECHANIC", "LOCATION"].map((item) => (
             <button
               key={item}
+              onClick={() => {
+                const element = document.getElementById(item);
+                if (element) element.scrollIntoView({ behavior: "smooth" });
+              }}
               className="relative group overflow-hidden hover:text-jzee-green transition-colors"
             >
               <span className="relative z-10">{item}</span>
@@ -42,7 +63,7 @@ const Navbar = () => {
         </div>
 
         {/* RIGHT: ACTION BUTTONS */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 text-white">
           {/* Search Icon */}
           <button className="hover:text-jzee-green transition-colors drop-shadow-md">
             <svg
@@ -51,7 +72,7 @@ const Navbar = () => {
               viewBox="0 0 24 24"
               strokeWidth={2}
               stroke="currentColor"
-              className="w-6 h-6"
+              className="w-5 h-5"
             >
               <path
                 strokeLinecap="round"
@@ -61,12 +82,12 @@ const Navbar = () => {
             </svg>
           </button>
 
-          {/* MESSAGE BUTTON - Solid White Block for Contrast */}
+          {/* MESSAGE BUTTON */}
           <a
             href="https://m.me/100063770933795"
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden md:block bg-white text-black px-6 py-3 text-xs font-black uppercase hover:bg-jzee-green transition-colors shadow-lg"
+            className="hidden md:block bg-white text-black px-5 py-2 text-xs font-black uppercase hover:bg-jzee-green transition-colors shadow-lg"
           >
             Message Us
           </a>
