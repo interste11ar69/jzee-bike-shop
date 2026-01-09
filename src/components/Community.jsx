@@ -44,7 +44,7 @@ const Community = () => {
   return (
     <section className="bg-zinc-950 py-24 px-4 md:px-12 border-t border-zinc-900">
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row justify-between items-end mb-12">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12">
         <div className="max-w-2xl">
           {/* 
              🛠️ TEXT UPDATE: "Biker Friends" 

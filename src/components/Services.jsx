@@ -230,7 +230,7 @@ const Services = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-black via-black/90 to-black"></div>
 
       <div className="relative z-10">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-8">
           <div>
             <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter mb-4">
               The <span className="text-jzee-green">Workshop</span>
