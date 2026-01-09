@@ -1,25 +1,38 @@
-/* 👇 1. RESTORE THIS LINE TO FIX THE WEBSITE LAYOUT */
 @import "tailwindcss";
 
-/* 👇 2. MANUALLY ADD THE MISSING STYLES HERE so the Marquee works */
-.bg-jzee-green {
-  background-color: #22c55e;
-}
+/* 🌌 THE UNIVERSE THEME (Tailwind v4 Protocol) */
+@theme {
+  /* 🟢 SHOP ACCENTS */
+  --color-jzee-green: #22c55e;
+  --color-jzee-black: #0a0a0a;
 
-@keyframes marquee {
-  0% {
-    transform: translateX(0%);
+  /* 🌌 INTERSTELLAR LABS PALETTE */
+  --color-stellar-blue: #3b82f6;
+  --color-stellar-purple: #a855f7;
+  --color-stellar-pink: #ec4899;
+
+  /* 🎞️ ANIMATION DEFINITIONS */
+  --animate-marquee: marquee 30s linear infinite;
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0%);
+    }
+    to {
+      transform: translateX(-100%);
+    }
   }
-  100% {
-    transform: translateX(-100%);
-  }
 }
 
-.animate-marquee {
-  animation: marquee 25s linear infinite;
+/* 🌑 GLOBAL OVERRIDES */
+:root {
+  background-color: black;
+  color: white;
 }
 
-/* 👇 3. YOUR CONCRETE TEXTURE (Keep this exactly as is) */
+/* 🧱 CONCRETE NOISE TEXTURE 
+   This gives the site that gritty, physical Davao street feel.
+*/
 body::before {
   content: "";
   position: fixed;
@@ -30,5 +43,14 @@ body::before {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
   pointer-events: none;
   z-index: 50;
-  opacity: 0.4;
+  opacity: 0.3;
+}
+
+/* 🛠️ UTILITY: HIDE SCROLLBARS FOR TABS */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

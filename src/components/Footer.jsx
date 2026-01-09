@@ -1,98 +1,102 @@
 import React from "react";
 
 const Footer = () => {
+  // 🌌 STAR GENERATOR: 30 stars with different twinkle speeds
+  const stars = Array.from({ length: 30 }).map((_, i) => ({
+    id: i,
+    top: `${Math.random() * 100}%`,
+    left: `${Math.random() * 100}%`,
+    size: Math.random() * 2 + 1 + "px",
+    duration: Math.random() * 4 + 2 + "s",
+  }));
+
   return (
-    <footer className="bg-black text-white pt-20 pb-10 border-t border-zinc-900">
-      <div className="container mx-auto px-6 md:px-12">
-        <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-16">
-          {/* LEFT: THE HQ INFO */}
-          <div className="max-w-md">
-            {/* 
-                NAME UPDATE: Stacked for impact. 
-                "BIKE SHOP" in Green to make it pop.
-            */}
-            <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-[0.9] mb-8">
-              JZEE
-              <br />
-              <span className="text-jzee-green">BIKE SHOP</span>
-            </h2>
+    <footer className="relative bg-black text-white py-16 border-t border-zinc-900 overflow-hidden">
+      {/* 🌠 THE UNIVERSE BACKGROUND */}
+      <div className="absolute inset-0 pointer-events-none">
+        {stars.map((star) => (
+          <div
+            key={star.id}
+            className="absolute bg-white rounded-full animate-pulse opacity-20"
+            style={{
+              top: star.top,
+              left: star.left,
+              width: star.size,
+              height: star.size,
+              animationDuration: star.duration,
+            }}
+          />
+        ))}
+      </div>
 
-            <div className="space-y-6 text-sm uppercase tracking-widest text-zinc-400">
-              <div>
-                <p className="text-white font-bold mb-1">Visit The Garage</p>
-                <p>B21 L8 Ph4B Gentian St.</p>
-                <p>El Rio Vista Subd., Davao City</p>
-              </div>
-
-              {/* HOURS UPDATE: The "Grind" Schedule */}
-              <div>
-                <p className="text-white font-bold mb-1">Operating Hours</p>
-                <p className="text-white">Daily: Morning - Midnight</p>
-                <p className="text-jzee-green font-bold">Open on Holidays</p>
-              </div>
+      <div className="container mx-auto px-6 md:px-12 relative z-10">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-12">
+          {/* LEFT: JZEE BRANDING */}
+          <div className="flex items-center gap-4">
+            <img
+              src="/logo.png"
+              alt="Jzee"
+              className="h-10 w-10 rounded-full opacity-50 grayscale hover:grayscale-0 transition-all"
+            />
+            <div className="flex flex-col leading-none">
+              <span className="font-black text-xl tracking-tighter uppercase italic">
+                JZEE<span className="text-zinc-500">BIKE SHOP</span>
+              </span>
+              <span className="text-[9px] font-bold tracking-[0.3em] text-zinc-600 uppercase">
+                Davao City
+              </span>
             </div>
           </div>
 
-          {/* RIGHT: THE FINAL CTA */}
-          <div className="w-full md:w-auto flex flex-col items-start md:items-end">
-            <h3 className="font-bold uppercase tracking-widest mb-6 text-sm text-white">
-              Got Questions?
-            </h3>
-
-            {/* BIG MESSAGE BUTTON */}
+          {/* CENTER: FACEBOOK LINK */}
+          <div className="flex gap-6">
             <a
-              href="https://m.me/100063770933795"
+              href="https://www.facebook.com/profile.php?id=100063770933795"
               target="_blank"
               rel="noreferrer"
-              className="group flex items-center gap-4 bg-white text-black px-8 py-4 font-black uppercase tracking-widest hover:bg-jzee-green transition-all mb-8"
+              className="text-zinc-500 hover:text-jzee-green transition-colors flex items-center gap-2 text-xs font-black uppercase tracking-widest"
             >
-              <span>Chat on Messenger</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="group-hover:translate-x-1 transition-transform"
               >
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
               </svg>
+              <span>Facebook</span>
             </a>
+          </div>
 
-            {/* SOCIAL ICONS - Removed IG, kept FB */}
-            <div className="flex gap-4">
-              <a
-                href="https://www.facebook.com/profile.php?id=100063770933795"
-                target="_blank"
-                rel="noreferrer"
-                className="w-12 h-12 border border-zinc-800 flex items-center justify-center hover:bg-white hover:text-black hover:border-white transition-all"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-                </svg>
-              </a>
+          {/* RIGHT: THE STABLE NEBULA SIGNATURE */}
+          <div className="text-center md:text-right mt-8 md:mt-0">
+            <p className="text-zinc-800 text-[8px] uppercase tracking-[0.5em] font-black mb-2">
+              ENGINEERED BY
+            </p>
+
+            <div className="relative group cursor-default inline-block">
+              {/* 🌌 THE SUBTLE ATMOSPHERE (Background Glow) */}
+              <div
+                className="absolute -inset-3 rounded-full blur-xl opacity-20 group-hover:opacity-50 transition-opacity duration-1000"
+                style={{
+                  background:
+                    "linear-gradient(to right, #3b82f6, #a855f7, #ec4899)",
+                }}
+              ></div>
+
+              {/* 🚀 THE BRAND TEXT (Simplified & Robust) */}
+              <p className="relative flex items-center justify-center md:justify-end">
+                <span className="font-mono font-black text-[10px] md:text-xs uppercase tracking-[0.4em] leading-none bg-gradient-to-r from-white via-blue-200 to-purple-400 bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(59,130,246,0.3)]">
+                  INTERSTELLAR_LABS
+                </span>
+              </p>
             </div>
           </div>
-        </div>
-
-        {/* BOTTOM BAR */}
-        <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-zinc-900 text-zinc-600 text-[10px] uppercase tracking-widest">
-          <p>© 2026 JZEE BIKE SHOP. DAVAO CITY.</p>
-          <p className="mt-2 md:mt-0">Ride Safe Biker Friends!</p>
         </div>
       </div>
     </footer>
