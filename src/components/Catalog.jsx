@@ -8,18 +8,19 @@ const categories = [
   "Suspension",
   "Drivetrain",
   "Wheels",
+  "Cockpit", // Added for Brakes/Stems
   "Gear",
 ];
 
 const allItems = [
-  // --- 1. FRAMES ---
+  // --- 1. FRAMES (Folder: /frames) ---
   {
     id: 1,
     category: "Frames",
     name: "S-Works Epic World Cup",
     price: "₱350,000",
     status: "Dream Build",
-    image: "/sworks_epicframe.jpg",
+    image: "/frames/sworks_epicframe.jpg",
   },
   {
     id: 2,
@@ -27,7 +28,7 @@ const allItems = [
     name: "Elves Nandor 29er",
     price: "₱65,000",
     status: "Available",
-    image: "/elves_nandor.jpg",
+    image: "/frames/elves_nandor.jpg",
   },
   {
     id: 3,
@@ -35,7 +36,7 @@ const allItems = [
     name: "Sagmit CrazyBoost V3",
     price: "₱8,500",
     status: "Best Seller",
-    image: "/sagmit_crazyboost.jpg",
+    image: "/frames/sagmit_crazyboost.jpg",
   },
   {
     id: 4,
@@ -43,159 +44,225 @@ const allItems = [
     name: "Mountainpeak Explorer V2",
     price: "₱9,500",
     status: "Restocked",
-    image: "/mountainpeak_explorerv2.jpg",
+    image: "/frames/mountainpeak_explorerv2.jpg",
   },
   {
     id: 5,
     category: "Frames",
-    name: "Aeroic Carbon Frame",
-    price: "₱28,000",
+    name: "Aeroic Frame",
+    price: "₱4,000",
     status: "Available",
-    image: "/aeroic.jpg",
+    image: "/frames/aeroic.jpg",
   },
 
-  // --- 2. SUSPENSION ---
+  // --- 2. SUSPENSION (Folder: /forks) ---
   {
     id: 6,
     category: "Suspension",
     name: "Manitou Machete Comp",
     price: "₱14,500",
     status: "In Stock",
-    image: "/manitou_machete.jpg",
+    image: "/forks/manitou_machete.jpg",
   },
   {
     id: 7,
     category: "Suspension",
-    name: "Suntour Epixon Air",
-    price: "₱8,500",
-    status: "Budget King",
-    image: "/suntour_epixon.jpg",
+    name: "Manitou Markhor",
+    price: "₱11,500",
+    status: "Available",
+    image: "/forks/manitou_markhour.jpg",
   },
   {
     id: 8,
     category: "Suspension",
-    name: "Mountainpeak Rigid Fork",
-    price: "₱3,500",
-    status: "Available",
-    image: "/mountainpeak_rigidfork.jpg",
+    name: "Suntour Epixon Air",
+    price: "₱8,500",
+    status: "Budget King",
+    image: "/forks/suntour_epixon.jpg",
   },
   {
     id: 9,
     category: "Suspension",
+    name: "Suntour XCR 2023",
+    price: "₱4,500",
+    status: "Available",
+    image: "/forks/suntour_XCR2023.jpg",
+  },
+  {
+    id: 10,
+    category: "Suspension",
+    name: "Tanke Air Fork",
+    price: "₱3,500",
+    status: "Budget",
+    image: "/forks/tanke_airforks.jpg",
+  },
+  {
+    id: 11,
+    category: "Suspension",
+    name: "Kocevlo Rigid Fork",
+    price: "₱4,500",
+    status: "Carbon",
+    image: "/forks/kocevlo_rigidforks.jpg",
+  },
+  {
+    id: 12,
+    category: "Suspension",
+    name: "Mountainpeak Rigid",
+    price: "₱3,500",
+    status: "Available",
+    image: "/forks/mountainpeak_rigidfork.jpg",
+  },
+  {
+    id: 13,
+    category: "Suspension",
     name: "Sagmit Evo 2 Rigid",
     price: "₱2,800",
     status: "Available",
-    image: "/sagmit_evo2fork.jpg",
+    image: "/forks/sagmit_evo2fork.jpg",
   },
 
-  // --- 3. DRIVETRAIN ---
+  // --- 3. DRIVETRAIN (Folder: /drivetrain) ---
   {
-    id: 10,
+    id: 14,
     category: "Drivetrain",
     name: "Shimano Ultegra R8000",
     price: "₱48,000",
     status: "Road",
-    image: "/shimano_ultegra.jpg",
+    image: "/drivetrain/shimano_ultegra.jpg",
   },
   {
-    id: 11,
+    id: 15,
     category: "Drivetrain",
     name: "Shimano Deore M5120",
     price: "₱2,450",
     status: "RD Only",
-    image: "/Shimano_Deore_M5120.jpg",
+    image: "/drivetrain/Shimano_Deore_M5120.jpg",
+  },
+  {
+    id: 16,
+    category: "Drivetrain",
+    name: "Shimano M4100 Combo",
+    price: "₱2,450",
+    status: "Chain + Cogs",
+    image: "/drivetrain/shimanoM4100_chainCogs.jpg",
   },
 
-  // --- 4. WHEELS ---
+  // --- 4. WHEELS (Folder: /wheelsets) ---
   {
-    id: 12,
+    id: 17,
     category: "Wheels",
     name: "Zipp 303 Firecrest",
     price: "₱110,000",
     status: "Premium",
-    image: "/zipp_wheelset.jpg",
+    image: "/wheelsets/zipp_wheelset.jpg",
   },
   {
-    id: 13,
+    id: 18,
     category: "Wheels",
     name: "ENVE SES 4.5",
     price: "₱145,000",
     status: "Order Basis",
-    image: "/enve_wheelset.jpg",
+    image: "/wheelsets/enve_wheelset.jpg",
   },
   {
-    id: 14,
+    id: 19,
     category: "Wheels",
     name: "DT Swiss ARC 1100",
     price: "₱95,000",
     status: "Available",
-    image: "/dtswiss_wheelset.jpg",
+    image: "/wheelsets/dtswiss_wheelset.jpg",
   },
   {
-    id: 15,
+    id: 20,
     category: "Wheels",
-    name: "Speedone Torpedo Hubs",
+    name: "Speedone Torpedo",
     price: "₱4,500",
     status: "Tunog Mayaman",
-    image: "/speedonehub.jpg",
+    image: "/wheelsets/speedonehub.jpg",
   },
   {
-    id: 16,
+    id: 21,
     category: "Wheels",
     name: "CST Fox Trail Tires",
     price: "₱850",
     status: "Pair",
-    image: "/cstfoxtrailtires.jpg",
+    image: "/wheelsets/cstfoxtrailtires.jpg",
   },
 
-  // --- 5. GEAR ---
+  // --- 5. COCKPIT & BRAKES (Root Folder) ---
   {
-    id: 17,
+    id: 22,
+    category: "Cockpit",
+    name: "Shimano MT200 Brakes",
+    price: "₱1,800",
+    status: "Best Seller",
+    image: "/cockpit/MT201.jpg",
+  },
+  {
+    id: 23,
+    category: "Cockpit",
+    name: "Roval Alpinist Stem",
+    price: "₱3,500",
+    status: "Lightweight",
+    image: "/cockpit/rovalstems.jpg",
+  },
+
+  // --- 6. GEAR (Folder: /gear) ---
+  {
+    id: 24,
     category: "Gear",
     name: "Shimano S-Phyre RC9",
     price: "₱18,500",
     status: "Pro Level",
-    image: "/shimano_sphyre.jpg",
+    image: "/gear/shimano_sphyre.jpg",
   },
   {
-    id: 18,
+    id: 25,
     category: "Gear",
-    name: "Shimano RC5 Shoes",
+    name: "Shimano RC5",
     price: "₱6,500",
     status: "Available",
-    image: "/rc5.jpg",
+    image: "/gear/rc5.jpg",
   },
   {
-    id: 19,
+    id: 26,
     category: "Gear",
-    name: "HJC Furion Helmet",
+    name: "Shimano RC1",
+    price: "₱4,500",
+    status: "Entry Level",
+    image: "/gear/rc1.jpg",
+  },
+  {
+    id: 27,
+    category: "Gear",
+    name: "HJC Furion 2.0",
     price: "₱9,800",
     status: "Aero",
-    image: "/hjc_helmets.jpg",
+    image: "/gear/hjc_helmets.jpg",
   },
   {
-    id: 20,
+    id: 28,
     category: "Gear",
     name: "Sunrimoon Helmet",
     price: "₱2,500",
     status: "Budget",
-    image: "/sunrimoon_helmet.jpg",
+    image: "/gear/sunrimoon_helmet.jpg",
   },
   {
-    id: 21,
+    id: 29,
     category: "Gear",
-    name: "6BySix Cycling Glasses",
+    name: "6BySix Glasses",
     price: "₱1,200",
     status: "New",
-    image: "/6bysix_cyclingglasses.jpg",
+    image: "/gear/6bysix_cyclingglasses.jpg",
   },
   {
-    id: 22,
+    id: 30,
     category: "Gear",
     name: "6BySix Gloves",
     price: "₱850",
     status: "In Stock",
-    image: "/6bysix_gloves.jpg",
+    image: "/gear/6bysix_gloves.jpg",
   },
 ];
 
@@ -219,7 +286,7 @@ const Catalog = ({ searchTerm }) => {
       {/* HEADER */}
       <div className="mb-12">
         <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter mb-6">
-          The <span className="text-jzee-green">Vault</span>
+          The <span className="text-jzee-green">Showroom</span>
         </h2>
 
         {searchTerm ? (
@@ -255,7 +322,6 @@ const Catalog = ({ searchTerm }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
-              // 🛠️ FIX: 'flex flex-col h-full' ensures the card stretches to fill the grid row
               className="group relative bg-zinc-900 border border-zinc-800 hover:border-jzee-green transition-all flex flex-col h-full"
             >
               {/* IMAGE */}
@@ -281,7 +347,7 @@ const Catalog = ({ searchTerm }) => {
                 </div>
               </div>
 
-              {/* INFO - 🛠️ FIX: 'flex-1' makes this section grow, 'flex-col' stacks items */}
+              {/* INFO */}
               <div className="p-4 flex flex-col flex-1">
                 <p className="text-zinc-500 text-[10px] uppercase tracking-widest mb-1">
                   {item.category}
@@ -290,7 +356,6 @@ const Catalog = ({ searchTerm }) => {
                   {item.name}
                 </h3>
 
-                {/* 🛠️ FIX: 'mt-auto' pushes this container to the bottom */}
                 <div className="mt-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-2 pt-4 border-t border-zinc-800">
                   <span className="text-white font-mono text-sm">
                     {item.price}
