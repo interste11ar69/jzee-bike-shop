@@ -121,28 +121,23 @@ const Hero = () => {
               </span>
             </div>
 
-            {/* --- MOBILE VIEW: FINGER SWIPE (Hidden on Desktop) --- */}
+            {/* --- MOBILE VIEW: SWIPE ANIMATION (Hidden on Desktop) --- */}
             <div className="flex md:hidden flex-col items-center gap-3">
-              {/* Simple Hand Icon SVG */}
-              <div className="relative w-8 h-8 flex justify-center items-center">
-                {/* The Hand */}
-                <motion.svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="w-6 h-6 text-zinc-400"
+              {/* The Track (Same style as desktop, just different animation inside) */}
+              <div className="w-[20px] h-[32px] border-2 border-zinc-500 rounded-full flex justify-center items-end p-1">
+                {/* The Moving Dot (Moves UPwards) */}
+                <motion.div
                   animate={{
-                    y: [10, -5, 10], // Moves up (swipe motion)
-                    opacity: [0, 1, 0], // Fades in as it goes up
+                    y: [0, -12, 0], // ⬆️ Moves UP instead of down
+                    opacity: [1, 0, 1], // Fades out at the top
                   }}
                   transition={{
-                    duration: 2,
+                    duration: 1.5,
                     repeat: Infinity,
                     ease: "easeInOut",
                   }}
-                >
-                  <path d="M12.75 5.757L12 5l-5.657 5.657a3 3 0 104.243 4.242l.707-.707V20a1 1 0 102 0V9.414l.707.707a3.001 3.001 0 004.243-4.242L12.75 5.757z" />
-                </motion.svg>
+                  className="w-1 h-1.5 bg-jzee-green rounded-full"
+                />
               </div>
 
               <span className="text-[8px] font-black uppercase tracking-[0.4em] text-zinc-500 animate-pulse">
