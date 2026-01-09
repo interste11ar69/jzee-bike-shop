@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 
-// 🛠️ DYNAMIC CATEGORIES (Based on your actual images)
+// 🛠️ DYNAMIC CATEGORIES
 const categories = [
   "All",
-  "Frames", // S-Works, Elves, Sagmit, Aeroic
-  "Suspension", // Manitou, Suntour, Rigid Forks
-  "Drivetrain", // Shimano Groupsets/RDs
-  "Wheels", // Zipp, Enve, DT Swiss, Hubs, Tires
-  "Gear", // Helmets, Shoes, Gloves, Glasses
+  "Frames",
+  "Suspension",
+  "Drivetrain",
+  "Wheels",
+  "Gear",
 ];
 
 const allItems = [
@@ -54,7 +54,7 @@ const allItems = [
     image: "/aeroic.jpg",
   },
 
-  // --- 2. SUSPENSION & FORKS ---
+  // --- 2. SUSPENSION ---
   {
     id: 6,
     category: "Suspension",
@@ -82,32 +82,15 @@ const allItems = [
   {
     id: 9,
     category: "Suspension",
-    name: "Kocevlo Rigid Forks",
-    price: "₱4,000",
-    status: "Available",
-    image: "/kocevlo_rigidforks.jpg",
-  },
-
-  {
-    id: 10,
-    category: "Suspension",
-    name: "Sagmit Evo 2 airfork",
+    name: "Sagmit Evo 2 Rigid",
     price: "₱2,800",
     status: "Available",
     image: "/sagmit_evo2fork.jpg",
   },
-  {
-    id: 11,
-    category: "Suspension",
-    name: "Tanke airfork",
-    price: "₱2,800",
-    status: "Available",
-    image: "/tanke_airforks.jpg",
-  },
 
   // --- 3. DRIVETRAIN ---
   {
-    id: 12,
+    id: 10,
     category: "Drivetrain",
     name: "Shimano Ultegra R8000",
     price: "₱48,000",
@@ -115,7 +98,7 @@ const allItems = [
     image: "/shimano_ultegra.jpg",
   },
   {
-    id: 13,
+    id: 11,
     category: "Drivetrain",
     name: "Shimano Deore M5120",
     price: "₱2,450",
@@ -123,9 +106,9 @@ const allItems = [
     image: "/Shimano_Deore_M5120.jpg",
   },
 
-  // --- 4. WHEELS & TIRES ---
+  // --- 4. WHEELS ---
   {
-    id: 14,
+    id: 12,
     category: "Wheels",
     name: "Zipp 303 Firecrest",
     price: "₱110,000",
@@ -133,7 +116,7 @@ const allItems = [
     image: "/zipp_wheelset.jpg",
   },
   {
-    id: 15,
+    id: 13,
     category: "Wheels",
     name: "ENVE SES 4.5",
     price: "₱145,000",
@@ -141,7 +124,7 @@ const allItems = [
     image: "/enve_wheelset.jpg",
   },
   {
-    id: 16,
+    id: 14,
     category: "Wheels",
     name: "DT Swiss ARC 1100",
     price: "₱95,000",
@@ -149,7 +132,7 @@ const allItems = [
     image: "/dtswiss_wheelset.jpg",
   },
   {
-    id: 17,
+    id: 15,
     category: "Wheels",
     name: "Speedone Torpedo Hubs",
     price: "₱4,500",
@@ -157,7 +140,7 @@ const allItems = [
     image: "/speedonehub.jpg",
   },
   {
-    id: 18,
+    id: 16,
     category: "Wheels",
     name: "CST Fox Trail Tires",
     price: "₱850",
@@ -165,9 +148,9 @@ const allItems = [
     image: "/cstfoxtrailtires.jpg",
   },
 
-  // --- 5. GEAR (Helmets, Shoes, etc) ---
+  // --- 5. GEAR ---
   {
-    id: 19,
+    id: 17,
     category: "Gear",
     name: "Shimano S-Phyre RC9",
     price: "₱18,500",
@@ -175,7 +158,7 @@ const allItems = [
     image: "/shimano_sphyre.jpg",
   },
   {
-    id: 20,
+    id: 18,
     category: "Gear",
     name: "Shimano RC5 Shoes",
     price: "₱6,500",
@@ -183,7 +166,7 @@ const allItems = [
     image: "/rc5.jpg",
   },
   {
-    id: 21,
+    id: 19,
     category: "Gear",
     name: "HJC Furion Helmet",
     price: "₱9,800",
@@ -191,7 +174,7 @@ const allItems = [
     image: "/hjc_helmets.jpg",
   },
   {
-    id: 22,
+    id: 20,
     category: "Gear",
     name: "Sunrimoon Helmet",
     price: "₱2,500",
@@ -199,7 +182,7 @@ const allItems = [
     image: "/sunrimoon_helmet.jpg",
   },
   {
-    id: 23,
+    id: 21,
     category: "Gear",
     name: "6BySix Cycling Glasses",
     price: "₱1,200",
@@ -207,7 +190,7 @@ const allItems = [
     image: "/6bysix_cyclingglasses.jpg",
   },
   {
-    id: 24,
+    id: 22,
     category: "Gear",
     name: "6BySix Gloves",
     price: "₱850",
@@ -216,23 +199,15 @@ const allItems = [
   },
 ];
 
-// 🛠️ ACCEPT THE PROP 'searchTerm'
 const Catalog = ({ searchTerm }) => {
   const [activeCategory, setActiveCategory] = useState("All");
 
-  // 🧠 SUPER FILTER LOGIC
   const filteredItems = allItems.filter((item) => {
-    // 1. Check Category
     const matchesCategory =
       activeCategory === "All" || item.category === activeCategory;
-
-    // 2. Check Search Text (Case insensitive)
-    // If searchTerm is empty, this is always true
-    const matchesSearch = item.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-
-    // 3. Return items that match BOTH
+    const matchesSearch = searchTerm
+      ? item.name.toLowerCase().includes(searchTerm.toLowerCase())
+      : true;
     return matchesCategory && matchesSearch;
   });
 
@@ -247,10 +222,6 @@ const Catalog = ({ searchTerm }) => {
           The <span className="text-jzee-green">Vault</span>
         </h2>
 
-        {/* 
-           If searching, show a message instead of tabs.
-           If not searching, show tabs.
-        */}
         {searchTerm ? (
           <p className="text-zinc-400 text-sm uppercase tracking-widest">
             Searching for:{" "}
@@ -284,10 +255,11 @@ const Catalog = ({ searchTerm }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
-              className="group relative bg-zinc-900 border border-zinc-800 hover:border-jzee-green transition-all"
+              // 🛠️ FIX: 'flex flex-col h-full' ensures the card stretches to fill the grid row
+              className="group relative bg-zinc-900 border border-zinc-800 hover:border-jzee-green transition-all flex flex-col h-full"
             >
-              {/* ... (Keep Image and Info code exactly the same) ... */}
-              <div className="aspect-square overflow-hidden relative">
+              {/* IMAGE */}
+              <div className="aspect-square overflow-hidden relative flex-shrink-0">
                 <img
                   src={item.image}
                   alt={item.name}
@@ -309,14 +281,17 @@ const Catalog = ({ searchTerm }) => {
                 </div>
               </div>
 
-              <div className="p-4">
+              {/* INFO - 🛠️ FIX: 'flex-1' makes this section grow, 'flex-col' stacks items */}
+              <div className="p-4 flex flex-col flex-1">
                 <p className="text-zinc-500 text-[10px] uppercase tracking-widest mb-1">
                   {item.category}
                 </p>
-                <h3 className="text-sm md:text-lg font-bold text-white uppercase leading-tight mb-3">
+                <h3 className="text-sm md:text-lg font-bold text-white uppercase leading-tight mb-4">
                   {item.name}
                 </h3>
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+
+                {/* 🛠️ FIX: 'mt-auto' pushes this container to the bottom */}
+                <div className="mt-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-2 pt-4 border-t border-zinc-800">
                   <span className="text-white font-mono text-sm">
                     {item.price}
                   </span>
@@ -333,7 +308,6 @@ const Catalog = ({ searchTerm }) => {
             </motion.div>
           ))
         ) : (
-          // EMPTY STATE (If search finds nothing)
           <div className="col-span-full text-center py-20 text-zinc-500">
             <p className="uppercase tracking-widest">No items found.</p>
           </div>
