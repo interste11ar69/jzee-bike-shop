@@ -32,7 +32,7 @@ const Location = () => {
             <div className="space-y-10">
               <div>
                 <h3 className="text-jzee-green text-xs font-black uppercase tracking-widest mb-2">
-                  HQ Location
+                  Shop Location
                 </h3>
                 <p className="text-2xl font-bold leading-tight">
                   B21 L8 Ph4B Gentian St.

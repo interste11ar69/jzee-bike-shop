@@ -92,7 +92,7 @@ const Footer = () => {
         {/* BOTTOM BAR */}
         <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-zinc-900 text-zinc-600 text-[10px] uppercase tracking-widest">
           <p>© 2026 JZEE BIKE SHOP. DAVAO CITY.</p>
-          <p className="mt-2 md:mt-0">Built for Speed.</p>
+          <p className="mt-2 md:mt-0">Ride Safe Biker Friends!</p>
         </div>
       </div>
     </footer>
