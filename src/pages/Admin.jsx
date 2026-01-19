@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../api/supabaseClient";
 import { CATEGORIES } from "../model/AppConstants";
-import imageCompression from "browser-image-compression";
 
 const Admin = () => {
   const [uploading, setUploading] = useState(false);
@@ -69,6 +68,12 @@ const Admin = () => {
       if (!file) return;
 
       setUploading(true);
+
+      // 👇 THIS IS THE DYNAMIC IMPORT (Lazy Loading)
+      // It downloads the library only at this exact moment.
+      const imageCompression = (await import("browser-image-compression"))
+        .default;
+
       const options = {
         maxSizeMB: 0.5,
         maxWidthOrHeight: 1080,
@@ -76,6 +81,7 @@ const Admin = () => {
       };
       const compressedFile = await imageCompression(file, options);
 
+      // ... rest of your code remains the same ...
       const fileExt = file.name.split(".").pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
@@ -83,16 +89,19 @@ const Admin = () => {
       const { error: uploadError } = await supabase.storage
         .from("inventory")
         .upload(filePath, compressedFile);
+
       if (uploadError) throw uploadError;
 
       const { data } = supabase.storage
         .from("inventory")
         .getPublicUrl(filePath);
 
+      // Reset position to center on new upload
+      setPos({ x: 50, y: 50 });
       setFormData({
         ...formData,
         image_url: data.publicUrl,
-        image_position: "center center",
+        image_position: "50% 50%",
       });
     } catch (error) {
       alert("Error: " + error.message);
@@ -187,7 +196,7 @@ const Admin = () => {
   const filteredItems = items.filter(
     (item) =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchTerm.toLowerCase())
+      item.category.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -421,8 +430,8 @@ const Admin = () => {
               {uploading
                 ? "Wait..."
                 : editingId
-                ? "Update Item"
-                : "Publish Item"}
+                  ? "Update Item"
+                  : "Publish Item"}
             </button>
           </form>
         </div>

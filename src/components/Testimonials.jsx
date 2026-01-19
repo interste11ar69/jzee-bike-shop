@@ -1,20 +1,81 @@
-import React from "react";
+import React, { useRef } from "react";
 import { TESTIMONIALS } from "../model/AppConstants";
 
 const Testimonials = () => {
+  const scrollRef = useRef(null);
+
+  // 🕹️ SCROLL LOGIC
+  const scroll = (direction) => {
+    const { current } = scrollRef;
+    if (current) {
+      // Scroll by 400px (approx one card width)
+      const scrollAmount = direction === "left" ? -400 : 400;
+      current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
+
   return (
-    <section className="bg-zinc-950 border-t border-zinc-900 py-24 overflow-hidden">
-      <div className="px-4 md:px-12 mb-12">
-        <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter">
-          Legit <span className="text-jzee-green">Check</span>
-        </h2>
-        <p className="text-zinc-500 text-sm uppercase tracking-widest mt-2">
-          Real riders. Real feedback.
-        </p>
+    <section className="bg-zinc-950 border-t border-zinc-900 py-24 overflow-hidden relative">
+      <div className="px-4 md:px-12 mb-12 flex flex-col md:flex-row justify-between items-end gap-6">
+        {/* HEADER */}
+        <div>
+          <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter">
+            Legit <span className="text-jzee-green">Check</span>
+          </h2>
+          <p className="text-zinc-500 text-sm uppercase tracking-widest mt-2">
+            Feedback from our Biker Friends.
+          </p>
+        </div>
+
+        {/* 🕹️ NAVIGATION ARROWS (The Fix) */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => scroll("left")}
+            className="w-12 h-12 rounded-full border border-zinc-700 bg-zinc-900 text-white flex items-center justify-center hover:border-jzee-green hover:text-jzee-green transition-all active:scale-95"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.75 19.5 8.25 12l7.5-7.5"
+              />
+            </svg>
+          </button>
+          <button
+            onClick={() => scroll("right")}
+            className="w-12 h-12 rounded-full border border-zinc-700 bg-zinc-900 text-white flex items-center justify-center hover:border-jzee-green hover:text-jzee-green transition-all active:scale-95"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m8.25 4.5 7.5 7.5-7.5 7.5"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* HORIZONTAL SCROLL CONTAINER */}
-      <div className="flex overflow-x-auto gap-6 px-4 md:px-12 pb-8 scrollbar-hide snap-x snap-mandatory">
+      {/* Added 'ref={scrollRef}' to link the buttons to this div */}
+      <div
+        ref={scrollRef}
+        className="flex overflow-x-auto gap-6 px-4 md:px-12 pb-8 scrollbar-hide snap-x snap-mandatory scroll-smooth"
+      >
         {TESTIMONIALS.map((t) => (
           <div
             key={t.id}

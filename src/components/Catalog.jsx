@@ -5,49 +5,62 @@ import { CATEGORIES } from "../model/AppConstants";
 
 const Catalog = ({ searchTerm }) => {
   const [activeCategory, setActiveCategory] = useState("All");
-  const [items, setItems] = useState([]); // All items from DB
-  const [isLoading, setIsLoading] = useState(true);
 
-  // 🔢 PAGINATION STATE
-  const [visibleCount, setVisibleCount] = useState(8); // Start with 8 items
+  // 📦 DATA STATE
+  const [items, setItems] = useState([]); // The list of products
+  const [totalCount, setTotalCount] = useState(0); // How many items exist in DB?
+  const [page, setPage] = useState(0); // Current page (0, 1, 2...)
+  const ITEMS_PER_PAGE = 8;
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false); // Specific loader for button
 
   // 🆕 Modal State
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // 📡 FETCHING DATA
+  // 🔄 EFFECT 1: Reset when Filter/Search changes
+  // When user types or clicks a category, we must start fresh.
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        let data;
-        if (searchTerm) {
-          data = await productService.search(searchTerm);
-        } else {
-          data = await productService.getByCategory(activeCategory);
-        }
-        setItems(data || []);
-      } catch (error) {
-        console.error("Failed to fetch inventory:", error);
-      } finally {
-        setIsLoading(false);
+    setPage(0);
+    setItems([]); // Clear current list
+    fetchData(0, activeCategory, searchTerm, true); // True = "This is a reset"
+  }, [activeCategory, searchTerm]);
+
+  // 📡 THE FETCH FUNCTION
+  const fetchData = async (pageIndex, category, search, isReset = false) => {
+    if (isReset)
+      setIsLoading(true); // Big loader for reset
+    else setIsLoadingMore(true); // Small loader for "Load More"
+
+    try {
+      const { data, count } = await productService.getProducts({
+        page: pageIndex,
+        limit: ITEMS_PER_PAGE,
+        category: category,
+        searchTerm: search,
+      });
+
+      setTotalCount(count || 0);
+
+      // If resetting, replace items. If loading more, append items.
+      if (isReset) {
+        setItems(data);
+      } else {
+        setItems((prevItems) => [...prevItems, ...data]);
       }
-    };
+    } catch (error) {
+      console.error("Catalog Error:", error);
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  };
 
-    fetchData();
-  }, [activeCategory, searchTerm]);
-
-  // 🔄 RESET PAGINATION when filters change
-  // If I switch from "All" to "Frames", I should start at the top again.
-  useEffect(() => {
-    setVisibleCount(8);
-  }, [activeCategory, searchTerm]);
-
-  // ✂️ SLICE THE DATA (Only show what is allowed by visibleCount)
-  const visibleItems = items.slice(0, visibleCount);
-
-  // 👇 FUNCTION TO LOAD MORE
+  // 👇 HANDLER: Load Next Page
   const handleLoadMore = () => {
-    setVisibleCount((prev) => prev + 8); // Load 8 more
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchData(nextPage, activeCategory, searchTerm, false);
   };
 
   return (
@@ -86,9 +99,10 @@ const Catalog = ({ searchTerm }) => {
       </div>
 
       {/* --- GRID --- */}
-      {isLoading ? (
+      {/* Show Skeleton only on Initial Load (Page 0) */}
+      {isLoading && page === 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div
               key={i}
               className="h-64 bg-zinc-900/50 animate-pulse rounded-sm border border-zinc-800"
@@ -98,8 +112,8 @@ const Catalog = ({ searchTerm }) => {
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-            {visibleItems.length > 0 ? (
-              visibleItems.map((item) => (
+            {items.length > 0 ? (
+              items.map((item) => (
                 <motion.div
                   key={item.id}
                   layoutId={`card-${item.id}`}
@@ -151,31 +165,43 @@ const Catalog = ({ searchTerm }) => {
             )}
           </div>
 
-          {/* 👇 LOAD MORE BUTTON (Only shows if there are hidden items) */}
-          {visibleCount < items.length && (
+          {/* 👇 SMART LOAD MORE BUTTON */}
+          {/* Only show if we haven't loaded everything yet */}
+          {items.length < totalCount && (
             <div className="mt-16 flex justify-center">
               <button
                 onClick={handleLoadMore}
-                className="group flex flex-col items-center gap-2"
+                disabled={isLoadingMore}
+                className="group flex flex-col items-center gap-2 disabled:opacity-50"
               >
-                <div className="w-12 h-12 rounded-full border border-zinc-700 flex items-center justify-center text-zinc-500 group-hover:border-jzee-green group-hover:text-jzee-green transition-all duration-300">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                    stroke="currentColor"
-                    className="w-6 h-6 animate-bounce"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="m19.5 8.25-7.5 7.5-7.5-7.5"
-                    />
-                  </svg>
+                <div
+                  className={`w-12 h-12 rounded-full border border-zinc-700 flex items-center justify-center text-zinc-500 group-hover:border-jzee-green group-hover:text-jzee-green transition-all duration-300 ${isLoadingMore ? "animate-spin border-t-jzee-green" : ""}`}
+                >
+                  {isLoadingMore ? (
+                    // Spinner Icon
+                    <div className="w-2 h-2 bg-jzee-green rounded-full"></div>
+                  ) : (
+                    // Arrow Icon
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                      className="w-6 h-6 animate-bounce"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                      />
+                    </svg>
+                  )}
                 </div>
                 <span className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500 group-hover:text-white transition-colors">
-                  Load More Products ({items.length - visibleCount} Left)
+                  {isLoadingMore
+                    ? "Loading..."
+                    : `Load More (${totalCount - items.length} Left)`}
                 </span>
               </button>
             </div>
@@ -186,65 +212,102 @@ const Catalog = ({ searchTerm }) => {
       {/* --- MODAL (POPUP) --- */}
       <AnimatePresence>
         {selectedItem && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-4 md:py-8">
+            {/* BACKDROP: Fast Fade */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
               onClick={() => setSelectedItem(null)}
-              className="absolute inset-0 bg-black/90 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/95 backdrop-blur-sm"
             />
 
+            {/* CARD: The "Tech Snap" Animation */}
             <motion.div
-              layoutId={`card-${selectedItem.id}`}
-              className="relative w-full max-w-lg bg-zinc-900 border border-jzee-green overflow-hidden shadow-2xl z-50 rounded-sm"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{
+                duration: 0.2, // ⚡ Fast (200ms)
+                ease: "circOut", // ⚡ Sharp stop (No wobble)
+              }}
+              className="relative w-full max-w-5xl bg-zinc-900 border border-zinc-800 overflow-hidden shadow-2xl z-50 rounded-sm flex flex-col md:flex-row max-h-[90vh] md:h-auto"
             >
+              {/* CLOSE BUTTON */}
               <button
                 onClick={() => setSelectedItem(null)}
-                className="absolute top-4 right-4 z-20 bg-black/50 text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-jzee-green hover:text-black transition-colors"
+                className="absolute top-4 right-4 z-50 bg-black/50 text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white hover:text-black transition-colors"
               >
                 ✕
               </button>
 
-              <div className="flex flex-col max-h-[80vh] overflow-y-auto">
-                {/* 
-                   👇 FIXED: MODAL IMAGE NOW USES THE POSITION TOO 
-                   Usually, for the modal, we want "object-contain" (Fit whole image)
-                   BUT if you want it to respect the crop, change to object-cover.
-                   Keeping object-contain allows user to see the full uncropped image details.
-                */}
-                <div className="h-64 w-full bg-black relative flex-shrink-0">
-                  <motion.img
-                    layoutId={`image-${selectedItem.id}`}
-                    src={selectedItem.image_url}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
+              {/* 📸 LEFT SIDE: IMAGE */}
+              <div className="w-full md:w-3/5 bg-black relative flex items-center justify-center h-64 md:h-auto border-b md:border-b-0 md:border-r border-zinc-800">
+                {/* Removed layoutId here too to stop the image from 'flying' awkwardly */}
+                <motion.img
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1, duration: 0.3 }}
+                  src={selectedItem.image_url}
+                  className="w-full h-full object-contain p-4 md:p-8"
+                  style={{
+                    objectPosition:
+                      selectedItem.image_position || "center center",
+                  }}
+                />
 
-                <div className="p-8">
-                  <span className="text-jzee-green text-xs font-black uppercase tracking-widest">
+                <div className="absolute top-4 left-4 bg-jzee-green text-black px-3 py-1 text-xs font-black uppercase tracking-widest">
+                  {selectedItem.status}
+                </div>
+              </div>
+
+              {/* 📝 RIGHT SIDE: DETAILS */}
+              <div className="w-full md:w-2/5 p-6 md:p-10 flex flex-col justify-center bg-zinc-900 overflow-y-auto">
+                <div className="mb-auto">
+                  <p className="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-2">
                     {selectedItem.category}
-                  </span>
-                  <h2 className="text-3xl font-black text-white uppercase italic leading-none mb-2 mt-2">
+                  </p>
+
+                  <h2 className="text-2xl md:text-4xl font-black text-white uppercase italic leading-[0.9] mb-4">
                     {selectedItem.name}
                   </h2>
-                  <p className="text-2xl font-mono text-zinc-300 mb-6">
-                    {selectedItem.display_price}
-                  </p>
 
-                  <p className="text-zinc-400 text-sm leading-relaxed mb-8">
-                    {selectedItem.description ||
-                      "Inquire for full specs and details."}
-                  </p>
+                  <div className="inline-block border border-jzee-green/30 bg-jzee-green/5 px-4 py-2 mb-6">
+                    <p className="text-xl md:text-2xl font-mono text-jzee-green font-bold">
+                      {selectedItem.display_price}
+                    </p>
+                  </div>
 
+                  <div className="prose prose-invert">
+                    <p className="text-zinc-400 text-sm leading-relaxed">
+                      {selectedItem.description ||
+                        "Inquire for full specs, compatibility, and latest pricing adjustments."}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-zinc-800">
                   <a
-                    href={`https://m.me/100063770933795?text=Hello Ma'am Zee, is the ${selectedItem.name} still available?`}
+                    href={`https://m.me/100063770933795?text=Hello Ma'am Zee, interested ko sa ${selectedItem.name} (${selectedItem.display_price}). Available pa?`}
                     target="_blank"
                     rel="noreferrer"
-                    className="block w-full bg-white text-black py-4 font-black uppercase text-center hover:bg-jzee-green transition-colors tracking-widest"
+                    className="flex items-center justify-center gap-3 w-full bg-white text-black py-4 font-black uppercase tracking-widest hover:bg-jzee-green transition-all hover:scale-[1.02]"
                   >
-                    Inquire via Messenger
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
+                      <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
+                    </svg>
+                    Inquire Now
                   </a>
+                  <p className="text-center text-zinc-600 text-[9px] uppercase tracking-widest mt-3">
+                    Direct Message to Owner
+                  </p>
                 </div>
               </div>
             </motion.div>

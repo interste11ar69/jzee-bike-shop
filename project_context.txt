@@ -1,4 +1,4 @@
-PROJECT CONTEXT GENERATED AT: 2026-01-19T01:12:33.290Z
+PROJECT CONTEXT GENERATED AT: 2026-01-19T07:27:52.268Z
 
 
 ================================================================================
@@ -87,10 +87,13 @@ FILE PATH: package.json
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.90.1",
     "@tailwindcss/postcss": "^4.1.18",
+    "browser-image-compression": "^2.0.2",
     "framer-motion": "^12.24.10",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.12.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
@@ -147,33 +150,48 @@ If you are developing a production application, we recommend using TypeScript wi
 
 
 ================================================================================
+FILE PATH: src\api\supabaseClient.js
+================================================================================
+
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// This 'supabase' object is your tool to read/write to the database
+export const supabase = createClient(supabaseUrl, supabaseKey);
+
+
+
+================================================================================
 FILE PATH: src\App.jsx
 ================================================================================
 
-import React, { useState } from "react";
-import Navbar from "./components/Navbar";
-import Hero from "./components/Hero";
-import Brands from "./components/Brands"; // <--- 1. IMPORT IT
-import Catalog from "./components/Catalog";
-import Services from "./components/Services";
-import Community from "./components/Community";
-import Location from "./components/Location";
-import Footer from "./components/Footer";
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import Admin from "./pages/Admin";
+import Login from "./pages/Login";
+import ProtectedRoute from "./components/ProtectedRoute"; // <--- Import Guard
 
 function App() {
-  const [searchTerm, setSearchTerm] = useState("");
-
   return (
-    <div className="bg-black min-h-screen">
-      <Navbar onSearch={setSearchTerm} />
-      <Hero />
-      <Brands /> {/* <--- 2. PLACE IT HERE */}
-      <Catalog searchTerm={searchTerm} />
-      <Services />
-      <Community />
-      <Location />
-      <Footer />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+
+        {/* 🔒 WRAP THE ADMIN ROUTE */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <Admin />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </Router>
   );
 }
 
@@ -242,292 +260,64 @@ export default Brands;
 FILE PATH: src\components\Catalog.jsx
 ================================================================================
 
-import React, { useState } from "react";
-import { motion } from "framer-motion";
-
-// 🛠️ DYNAMIC CATEGORIES
-const categories = [
-  "All",
-  "Frames",
-  "Suspension",
-  "Drivetrain",
-  "Wheels",
-  "Cockpit", // Added for Brakes/Stems
-  "Gear",
-];
-
-const allItems = [
-  // --- 1. FRAMES (Folder: /frames) ---
-  {
-    id: 1,
-    category: "Frames",
-    name: "S-Works Epic World Cup",
-    price: "₱350,000",
-    status: "Dream Build",
-    image: "/frames/sworks_epicframe.jpg",
-  },
-  {
-    id: 2,
-    category: "Frames",
-    name: "Elves Nandor 29er",
-    price: "₱65,000",
-    status: "Available",
-    image: "/frames/elves_nandor.jpg",
-  },
-  {
-    id: 3,
-    category: "Frames",
-    name: "Sagmit CrazyBoost V3",
-    price: "₱8,500",
-    status: "Best Seller",
-    image: "/frames/sagmit_crazyboost.jpg",
-  },
-  {
-    id: 4,
-    category: "Frames",
-    name: "Mountainpeak Explorer V2",
-    price: "₱9,500",
-    status: "Restocked",
-    image: "/frames/mountainpeak_explorerv2.jpg",
-  },
-  {
-    id: 5,
-    category: "Frames",
-    name: "Aeroic Frame",
-    price: "₱4,000",
-    status: "Available",
-    image: "/frames/aeroic.jpg",
-  },
-
-  // --- 2. SUSPENSION (Folder: /forks) ---
-  {
-    id: 6,
-    category: "Suspension",
-    name: "Manitou Machete Comp",
-    price: "₱14,500",
-    status: "In Stock",
-    image: "/forks/manitou_machete.jpg",
-  },
-  {
-    id: 7,
-    category: "Suspension",
-    name: "Manitou Markhor",
-    price: "₱11,500",
-    status: "Available",
-    image: "/forks/manitou_markhour.jpg",
-  },
-  {
-    id: 8,
-    category: "Suspension",
-    name: "Suntour Epixon Air",
-    price: "₱8,500",
-    status: "Budget King",
-    image: "/forks/suntour_epixon.jpg",
-  },
-  {
-    id: 9,
-    category: "Suspension",
-    name: "Suntour XCR 2023",
-    price: "₱4,500",
-    status: "Available",
-    image: "/forks/suntour_XCR2023.jpg",
-  },
-  {
-    id: 10,
-    category: "Suspension",
-    name: "Tanke Air Fork",
-    price: "₱3,500",
-    status: "Budget",
-    image: "/forks/tanke_airforks.jpg",
-  },
-  {
-    id: 11,
-    category: "Suspension",
-    name: "Kocevlo Rigid Fork",
-    price: "₱4,500",
-    status: "Carbon",
-    image: "/forks/kocevlo_rigidforks.jpg",
-  },
-  {
-    id: 12,
-    category: "Suspension",
-    name: "Mountainpeak Rigid",
-    price: "₱3,500",
-    status: "Available",
-    image: "/forks/mountainpeak_rigidfork.jpg",
-  },
-  {
-    id: 13,
-    category: "Suspension",
-    name: "Sagmit Evo 2 Rigid",
-    price: "₱2,800",
-    status: "Available",
-    image: "/forks/sagmit_evo2fork.jpg",
-  },
-
-  // --- 3. DRIVETRAIN (Folder: /drivetrain) ---
-  {
-    id: 14,
-    category: "Drivetrain",
-    name: "Shimano Ultegra R8000",
-    price: "₱48,000",
-    status: "Road",
-    image: "/drivetrain/shimano_ultegra.jpg",
-  },
-  {
-    id: 15,
-    category: "Drivetrain",
-    name: "Shimano Deore M5120",
-    price: "₱2,450",
-    status: "RD Only",
-    image: "/drivetrain/Shimano_Deore_M5120.jpg",
-  },
-  {
-    id: 16,
-    category: "Drivetrain",
-    name: "Shimano M4100 Combo",
-    price: "₱2,450",
-    status: "Chain + Cogs",
-    image: "/drivetrain/shimanoM4100_chainCogs.jpg",
-  },
-
-  // --- 4. WHEELS (Folder: /wheelsets) ---
-  {
-    id: 17,
-    category: "Wheels",
-    name: "Zipp 303 Firecrest",
-    price: "₱110,000",
-    status: "Premium",
-    image: "/wheelsets/zipp_wheelset.jpg",
-  },
-  {
-    id: 18,
-    category: "Wheels",
-    name: "ENVE SES 4.5",
-    price: "₱145,000",
-    status: "Order Basis",
-    image: "/wheelsets/enve_wheelset.jpg",
-  },
-  {
-    id: 19,
-    category: "Wheels",
-    name: "DT Swiss ARC 1100",
-    price: "₱95,000",
-    status: "Available",
-    image: "/wheelsets/dtswiss_wheelset.jpg",
-  },
-  {
-    id: 20,
-    category: "Wheels",
-    name: "Speedone Torpedo",
-    price: "₱4,500",
-    status: "Tunog Mayaman",
-    image: "/wheelsets/speedonehub.jpg",
-  },
-  {
-    id: 21,
-    category: "Wheels",
-    name: "CST Fox Trail Tires",
-    price: "₱850",
-    status: "Pair",
-    image: "/wheelsets/cstfoxtrailtires.jpg",
-  },
-
-  // --- 5. COCKPIT & BRAKES (Root Folder) ---
-  {
-    id: 22,
-    category: "Cockpit",
-    name: "Shimano MT200 Brakes",
-    price: "₱1,800",
-    status: "Best Seller",
-    image: "/cockpit/MT201.jpg",
-  },
-  {
-    id: 23,
-    category: "Cockpit",
-    name: "Roval Alpinist Stem",
-    price: "₱3,500",
-    status: "Lightweight",
-    image: "/cockpit/rovalstems.jpg",
-  },
-
-  // --- 6. GEAR (Folder: /gear) ---
-  {
-    id: 24,
-    category: "Gear",
-    name: "Shimano S-Phyre RC9",
-    price: "₱18,500",
-    status: "Pro Level",
-    image: "/gear/shimano_sphyre.jpg",
-  },
-  {
-    id: 25,
-    category: "Gear",
-    name: "Shimano RC5",
-    price: "₱6,500",
-    status: "Available",
-    image: "/gear/rc5.jpg",
-  },
-  {
-    id: 26,
-    category: "Gear",
-    name: "Shimano RC1",
-    price: "₱4,500",
-    status: "Entry Level",
-    image: "/gear/rc1.jpg",
-  },
-  {
-    id: 27,
-    category: "Gear",
-    name: "HJC Furion 2.0",
-    price: "₱9,800",
-    status: "Aero",
-    image: "/gear/hjc_helmets.jpg",
-  },
-  {
-    id: 28,
-    category: "Gear",
-    name: "Sunrimoon Helmet",
-    price: "₱2,500",
-    status: "Budget",
-    image: "/gear/sunrimoon_helmet.jpg",
-  },
-  {
-    id: 29,
-    category: "Gear",
-    name: "6BySix Glasses",
-    price: "₱1,200",
-    status: "New",
-    image: "/gear/6bysix_cyclingglasses.jpg",
-  },
-  {
-    id: 30,
-    category: "Gear",
-    name: "6BySix Gloves",
-    price: "₱850",
-    status: "In Stock",
-    image: "/gear/6bysix_gloves.jpg",
-  },
-];
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { productService } from "../services/productService";
+import { CATEGORIES } from "../model/AppConstants";
 
 const Catalog = ({ searchTerm }) => {
   const [activeCategory, setActiveCategory] = useState("All");
+  const [items, setItems] = useState([]); // All items from DB
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredItems = allItems.filter((item) => {
-    const matchesCategory =
-      activeCategory === "All" || item.category === activeCategory;
-    const matchesSearch = searchTerm
-      ? item.name.toLowerCase().includes(searchTerm.toLowerCase())
-      : true;
-    return matchesCategory && matchesSearch;
-  });
+  // 🔢 PAGINATION STATE
+  const [visibleCount, setVisibleCount] = useState(8); // Start with 8 items
+
+  // 🆕 Modal State
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  // 📡 FETCHING DATA
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        let data;
+        if (searchTerm) {
+          data = await productService.search(searchTerm);
+        } else {
+          data = await productService.getByCategory(activeCategory);
+        }
+        setItems(data || []);
+      } catch (error) {
+        console.error("Failed to fetch inventory:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [activeCategory, searchTerm]);
+
+  // 🔄 RESET PAGINATION when filters change
+  // If I switch from "All" to "Frames", I should start at the top again.
+  useEffect(() => {
+    setVisibleCount(8);
+  }, [activeCategory, searchTerm]);
+
+  // ✂️ SLICE THE DATA (Only show what is allowed by visibleCount)
+  const visibleItems = items.slice(0, visibleCount);
+
+  // 👇 FUNCTION TO LOAD MORE
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => prev + 8); // Load 8 more
+  };
 
   return (
     <section
       id="INVENTORY"
-      className="bg-black py-24 px-4 md:px-12 border-t border-zinc-900 min-h-screen"
+      className="bg-black py-24 px-4 md:px-12 border-t border-zinc-900 min-h-screen relative"
     >
-      {/* HEADER */}
+      {/* --- HEADER --- */}
       <div className="mb-12">
         <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter mb-6">
           The <span className="text-jzee-green">Showroom</span>
@@ -535,12 +325,12 @@ const Catalog = ({ searchTerm }) => {
 
         {searchTerm ? (
           <p className="text-zinc-400 text-sm uppercase tracking-widest">
-            Searching for:{" "}
+            Results for:{" "}
             <span className="text-white font-bold">"{searchTerm}"</span>
           </p>
         ) : (
           <div className="flex gap-4 overflow-x-auto p-4 scrollbar-hide">
-            {categories.map((cat) => (
+            {CATEGORIES.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
@@ -557,71 +347,172 @@ const Catalog = ({ searchTerm }) => {
         )}
       </div>
 
-      {/* GRID */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-        {filteredItems.length > 0 ? (
-          filteredItems.map((item) => (
+      {/* --- GRID --- */}
+      {isLoading ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="h-64 bg-zinc-900/50 animate-pulse rounded-sm border border-zinc-800"
+            ></div>
+          ))}
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+            {visibleItems.length > 0 ? (
+              visibleItems.map((item) => (
+                <motion.div
+                  key={item.id}
+                  layoutId={`card-${item.id}`}
+                  onClick={() => setSelectedItem(item)}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="group relative bg-zinc-900 border border-zinc-800 hover:border-jzee-green cursor-pointer flex flex-col h-full"
+                >
+                  {/* IMAGE */}
+                  <div className="aspect-square overflow-hidden relative flex-shrink-0">
+                    <motion.img
+                      layoutId={`image-${item.id}`}
+                      src={item.image_url}
+                      alt={item.name}
+                      style={{
+                        objectPosition: item.image_position || "center center",
+                      }}
+                      className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${
+                        item.status === "Sold Out" ? "grayscale opacity-50" : ""
+                      }`}
+                    />
+                    <div
+                      className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-1 uppercase bg-jzee-green text-black`}
+                    >
+                      {item.status}
+                    </div>
+                  </div>
+
+                  {/* INFO */}
+                  <div className="p-4 flex flex-col flex-1">
+                    <p className="text-zinc-500 text-[10px] uppercase tracking-widest mb-1">
+                      {item.category}
+                    </p>
+                    <h3 className="text-sm md:text-lg font-bold text-white uppercase leading-tight mb-4">
+                      {item.name}
+                    </h3>
+                    <div className="mt-auto pt-4 border-t border-zinc-800">
+                      <span className="text-white font-mono text-sm">
+                        {item.display_price}
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-20 text-zinc-500">
+                <p className="uppercase tracking-widest">No items found.</p>
+              </div>
+            )}
+          </div>
+
+          {/* 👇 LOAD MORE BUTTON (Only shows if there are hidden items) */}
+          {visibleCount < items.length && (
+            <div className="mt-16 flex justify-center">
+              <button
+                onClick={handleLoadMore}
+                className="group flex flex-col items-center gap-2"
+              >
+                <div className="w-12 h-12 rounded-full border border-zinc-700 flex items-center justify-center text-zinc-500 group-hover:border-jzee-green group-hover:text-jzee-green transition-all duration-300">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className="w-6 h-6 animate-bounce"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                    />
+                  </svg>
+                </div>
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500 group-hover:text-white transition-colors">
+                  Load More Products ({items.length - visibleCount} Left)
+                </span>
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* --- MODAL (POPUP) --- */}
+      <AnimatePresence>
+        {selectedItem && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
             <motion.div
-              key={item.id}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className="group relative bg-zinc-900 border border-zinc-800 hover:border-jzee-green transition-all flex flex-col h-full"
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedItem(null)}
+              className="absolute inset-0 bg-black/90 backdrop-blur-sm"
+            />
+
+            <motion.div
+              layoutId={`card-${selectedItem.id}`}
+              className="relative w-full max-w-lg bg-zinc-900 border border-jzee-green overflow-hidden shadow-2xl z-50 rounded-sm"
             >
-              {/* IMAGE */}
-              <div className="aspect-square overflow-hidden relative flex-shrink-0">
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${
-                    item.status === "Sold Out" ? "grayscale opacity-50" : ""
-                  }`}
-                />
-                <div
-                  className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-1 uppercase ${
-                    item.status === "Available" || item.status === "In Stock"
-                      ? "bg-jzee-green text-black"
-                      : item.status === "Dream Build" ||
-                        item.status === "Premium"
-                      ? "bg-white text-black"
-                      : "bg-zinc-800 text-white border border-zinc-600"
-                  }`}
-                >
-                  {item.status}
+              <button
+                onClick={() => setSelectedItem(null)}
+                className="absolute top-4 right-4 z-20 bg-black/50 text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-jzee-green hover:text-black transition-colors"
+              >
+                ✕
+              </button>
+
+              <div className="flex flex-col max-h-[80vh] overflow-y-auto">
+                {/* 
+                   👇 FIXED: MODAL IMAGE NOW USES THE POSITION TOO 
+                   Usually, for the modal, we want "object-contain" (Fit whole image)
+                   BUT if you want it to respect the crop, change to object-cover.
+                   Keeping object-contain allows user to see the full uncropped image details.
+                */}
+                <div className="h-64 w-full bg-black relative flex-shrink-0">
+                  <motion.img
+                    layoutId={`image-${selectedItem.id}`}
+                    src={selectedItem.image_url}
+                    className="w-full h-full object-contain"
+                  />
                 </div>
-              </div>
 
-              {/* INFO */}
-              <div className="p-4 flex flex-col flex-1">
-                <p className="text-zinc-500 text-[10px] uppercase tracking-widest mb-1">
-                  {item.category}
-                </p>
-                <h3 className="text-sm md:text-lg font-bold text-white uppercase leading-tight mb-4">
-                  {item.name}
-                </h3>
-
-                <div className="mt-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-2 pt-4 border-t border-zinc-800">
-                  <span className="text-white font-mono text-sm">
-                    {item.price}
+                <div className="p-8">
+                  <span className="text-jzee-green text-xs font-black uppercase tracking-widest">
+                    {selectedItem.category}
                   </span>
+                  <h2 className="text-3xl font-black text-white uppercase italic leading-none mb-2 mt-2">
+                    {selectedItem.name}
+                  </h2>
+                  <p className="text-2xl font-mono text-zinc-300 mb-6">
+                    {selectedItem.display_price}
+                  </p>
+
+                  <p className="text-zinc-400 text-sm leading-relaxed mb-8">
+                    {selectedItem.description ||
+                      "Inquire for full specs and details."}
+                  </p>
+
                   <a
-                    href="https://m.me/100063770933795"
+                    href={`https://m.me/100063770933795?text=Hello Ma'am Zee, is the ${selectedItem.name} still available?`}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[10px] font-bold uppercase bg-white text-black px-3 py-1 hover:bg-jzee-green transition-colors w-full md:w-auto text-center"
+                    className="block w-full bg-white text-black py-4 font-black uppercase text-center hover:bg-jzee-green transition-colors tracking-widest"
                   >
-                    Inquire
+                    Inquire via Messenger
                   </a>
                 </div>
               </div>
             </motion.div>
-          ))
-        ) : (
-          <div className="col-span-full text-center py-20 text-zinc-500">
-            <p className="uppercase tracking-widest">No items found.</p>
           </div>
         )}
-      </div>
+      </AnimatePresence>
     </section>
   );
 };
@@ -1361,6 +1252,55 @@ export default Navbar;
 
 
 ================================================================================
+FILE PATH: src\components\ProtectedRoute.jsx
+================================================================================
+
+import React, { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
+import { supabase } from "../api/supabaseClient";
+
+const ProtectedRoute = ({ children }) => {
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // 1. Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    // 2. Listen for changes (Logout/Login)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading)
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        Loading Access...
+      </div>
+    );
+
+  // If no user, kick them to Login
+  if (!session) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // If user exists, show the Admin Page
+  return children;
+};
+
+export default ProtectedRoute;
+
+
+
+================================================================================
 FILE PATH: src\components\Services.jsx
 ================================================================================
 
@@ -1656,6 +1596,95 @@ export default Services;
 
 
 ================================================================================
+FILE PATH: src\components\Testimonials.jsx
+================================================================================
+
+import React from "react";
+import { TESTIMONIALS } from "../model/AppConstants";
+
+const Testimonials = () => {
+  return (
+    <section className="bg-zinc-950 border-t border-zinc-900 py-24 overflow-hidden">
+      <div className="px-4 md:px-12 mb-12">
+        <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter">
+          Legit <span className="text-jzee-green">Check</span>
+        </h2>
+        <p className="text-zinc-500 text-sm uppercase tracking-widest mt-2">
+          Real riders. Real feedback.
+        </p>
+      </div>
+
+      {/* HORIZONTAL SCROLL CONTAINER */}
+      <div className="flex overflow-x-auto gap-6 px-4 md:px-12 pb-8 scrollbar-hide snap-x snap-mandatory">
+        {TESTIMONIALS.map((t) => (
+          <div
+            key={t.id}
+            className="snap-center min-w-[300px] md:min-w-[400px] bg-zinc-900/50 border border-zinc-800 p-8 flex flex-col justify-between rounded-sm hover:border-jzee-green transition-colors"
+          >
+            <div>
+              {/* STAR RATING */}
+              <div className="flex gap-1 mb-4 text-jzee-green">
+                {[...Array(t.rating)].map((_, i) => (
+                  <svg
+                    key={i}
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                ))}
+              </div>
+              <p className="text-white text-lg italic font-medium leading-relaxed">
+                "{t.text}"
+              </p>
+            </div>
+
+            <div className="mt-8 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-white font-black text-sm border border-zinc-700">
+                {t.name.charAt(0)}
+              </div>
+              <div>
+                <p className="text-white font-bold uppercase text-sm">
+                  {t.name}
+                </p>
+                <p className="text-zinc-500 text-[10px] uppercase tracking-widest">
+                  {t.role}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {/* CALL TO ACTION CARD */}
+        <a
+          href="https://www.facebook.com/profile.php?id=100063770933795&sk=reviews"
+          target="_blank"
+          rel="noreferrer"
+          className="snap-center min-w-[300px] md:min-w-[400px] bg-jzee-green flex flex-col items-center justify-center p-8 text-center cursor-pointer hover:brightness-110 transition-all"
+        >
+          <h3 className="text-black font-black text-2xl uppercase leading-none">
+            See More
+          </h3>
+          <p className="text-black/80 font-bold text-sm uppercase mt-2">
+            On Facebook Page
+          </p>
+        </a>
+      </div>
+    </section>
+  );
+};
+
+export default Testimonials;
+
+
+
+================================================================================
 FILE PATH: src\index.css
 ================================================================================
 
@@ -1732,6 +1761,831 @@ createRoot(document.getElementById('root')).render(
     <App />
   </StrictMode>,
 )
+
+
+
+================================================================================
+FILE PATH: src\model\AppConstants.js
+================================================================================
+
+/**
+ * src/model/AppConstants.js
+ *
+ * This file contains the immutable constants for the application.
+ * Changing these here updates the entire application instantly.
+ */
+
+// 🛠️ The Official Category List
+// Used in Catalog filters and Product tagging
+export const CATEGORIES = [
+  "All",
+  "Frames",
+  "Suspension",
+  "Drivetrain",
+  "Wheels",
+  "Cockpit", // Covers Stems, Handlebars, Brakes
+  "Gear", // Helmets, Shoes, Jerseys
+];
+
+// 🏁 The Partner Brands
+// Used in the infinite marquee scroller
+export const BRANDS = [
+  "SHIMANO",
+  "SRAM",
+  "FOX RACING",
+  "SPECIALIZED",
+  "SAGMIT",
+  "MOUNTAINPEAK",
+  "MAXXIS",
+  "CONTINENTAL",
+  "ZIPP",
+  "ENVE",
+  "KMC",
+  "LOOK",
+];
+
+// 🏷️ Product Statuses (Enum)
+// This ensures we don't accidentally type "Soldout" instead of "Sold Out"
+export const PRODUCT_STATUS = {
+  AVAILABLE: "Available",
+  IN_STOCK: "In Stock",
+  SOLD_OUT: "Sold Out",
+  DREAM_BUILD: "Dream Build",
+  PREMIUM: "Premium",
+  BUDGET_KING: "Budget King",
+  BEST_SELLER: "Best Seller",
+  RESTOCKED: "Restocked",
+};
+
+// 🌟 SOCIAL PROOF
+export const TESTIMONIALS = [
+  {
+    id: 1,
+    name: "Ryan D.",
+    role: "Downhill Racer",
+    text: "Grabe ang mechanic diri. My suspension feels brand new. Legit service!",
+    rating: 5,
+  },
+  {
+    id: 2,
+    name: "Maria C.",
+    role: "Weekend Warrior",
+    text: "Barato ra jud compared sa downtown shops. Accommodating pa si Ma'am Zee.",
+    rating: 5,
+  },
+  {
+    id: 3,
+    name: "Boss K.",
+    role: "Fixie User",
+    text: "Solid ang wheel building. Tunog mayaman pero budget meal presyo.",
+    rating: 5,
+  },
+  {
+    id: 4,
+    name: "Jay R.",
+    role: "MTB Enthusiast",
+    text: "Fast transaction. The item was well packaged and arrived safely in Cebu.",
+    rating: 5,
+  },
+];
+
+
+
+================================================================================
+FILE PATH: src\model\ProductSchema.js
+================================================================================
+
+/**
+ * src/model/ProductSchema.js
+ *
+ * This is a "Virtual Schema". It doesn't run code, but it documents
+ * the shape of our data for the developer.
+ */
+
+/**
+ * @typedef {Object} Product
+ * @property {string} id - Unique identifier (e.g., "frm-001")
+ * @property {string} name - The display name of the item
+ * @property {string} category - Must match one of CATEGORIES from AppConstants
+ * @property {number} price - Raw number for calculations (e.g., 350000)
+ * @property {string} displayPrice - Formatted string (e.g., "₱350,000")
+ * @property {string} status - Marketing status (e.g., "Dream Build")
+ * @property {string} image - Path to the local image
+ * @property {string} description - Full details for the modal view
+ * @property {string} [link] - (Optional) Direct external link if needed
+ * @property {boolean} [featured] - (Optional) If true, could appear on Home page
+ */
+
+// We export an empty object just to make this a valid module,
+// but the real value here is the @typedef above.
+export const ProductSchema = {};
+
+
+
+================================================================================
+FILE PATH: src\pages\Admin.jsx
+================================================================================
+
+import React, { useState, useEffect } from "react";
+import { supabase } from "../api/supabaseClient";
+import { CATEGORIES } from "../model/AppConstants";
+import imageCompression from "browser-image-compression";
+
+const Admin = () => {
+  const [uploading, setUploading] = useState(false);
+  const [items, setItems] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // 🧮 HELPER: Convert "50% 50%" string to numbers {x: 50, y: 50}
+  const parsePosition = (posString) => {
+    if (!posString) return { x: 50, y: 50 };
+
+    const parts = posString.split(" ");
+    if (parts.length === 2 && parts[0].includes("%")) {
+      return {
+        x: parseInt(parts[0]),
+        y: parseInt(parts[1]),
+      };
+    }
+    return { x: 50, y: 50 }; // Default fallback
+  };
+
+  // 🎯 NUMERIC POSITION STATE (0-100)
+  const [pos, setPos] = useState({ x: 50, y: 50 });
+
+  // 🕹️ THE NUDGE LOGIC (Moves by 10%)
+  const nudge = (dx, dy) => {
+    setPos((prev) => {
+      // Calculate new position (Clamp between 0% and 100%)
+      const newX = Math.max(0, Math.min(100, prev.x + dx));
+      const newY = Math.max(0, Math.min(100, prev.y + dy));
+
+      // Update Form Data immediately as a string
+      const newString = `${newX}% ${newY}%`;
+      setFormData((f) => ({ ...f, image_position: newString }));
+
+      return { x: newX, y: newY };
+    });
+  };
+
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "Frames",
+    price: "",
+    status: "Available",
+    description: "",
+    image_url: "",
+    image_position: "center center",
+  });
+
+  const fetchItems = async () => {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (!error) setItems(data);
+  };
+
+  useEffect(() => {
+    fetchItems();
+  }, []);
+
+  const handleImageUpload = async (e) => {
+    try {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      setUploading(true);
+      const options = {
+        maxSizeMB: 0.5,
+        maxWidthOrHeight: 1080,
+        useWebWorker: true,
+      };
+      const compressedFile = await imageCompression(file, options);
+
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("inventory")
+        .upload(filePath, compressedFile);
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from("inventory")
+        .getPublicUrl(filePath);
+
+      setFormData({
+        ...formData,
+        image_url: data.publicUrl,
+        image_position: "center center",
+      });
+    } catch (error) {
+      alert("Error: " + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // ✏️ START EDITING (Populate Form & Sync Joystick)
+  const handleEdit = (item) => {
+    setEditingId(item.id);
+
+    // 1. Convert DB string (e.g., "50% 20%") to numbers for the joystick state
+    // This ensures that when you click 'Up', it starts from the current position
+    const currentPos = parsePosition(item.image_position);
+    setPos(currentPos);
+
+    // 2. Populate the form data
+    setFormData({
+      name: item.name,
+      category: item.category,
+      price: item.price,
+      status: item.status,
+      description: item.description || "",
+      image_url: item.image_url,
+      // If database has no position, default to Center (50% 50%)
+      image_position: item.image_position || "50% 50%",
+    });
+
+    // 3. Scroll to top so user sees the form immediately
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setFormData({
+      name: "",
+      category: "Frames",
+      price: "",
+      status: "Available",
+      description: "",
+      image_url: "",
+      image_position: "center center",
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.image_url) return alert("Please upload an image first!");
+
+    const display_price = `₱${parseInt(formData.price).toLocaleString()}`;
+
+    const productData = {
+      name: formData.name,
+      category: formData.category,
+      price: parseInt(formData.price),
+      display_price: display_price,
+      status: formData.status,
+      image_url: formData.image_url,
+      description: formData.description,
+      image_position: formData.image_position,
+    };
+
+    let error;
+    if (editingId) {
+      const { error: updateError } = await supabase
+        .from("products")
+        .update(productData)
+        .eq("id", editingId);
+      error = updateError;
+    } else {
+      const { error: insertError } = await supabase
+        .from("products")
+        .insert([{ ...productData, is_featured: false }]);
+      error = insertError;
+    }
+
+    if (error) alert("Error: " + error.message);
+    else {
+      alert(editingId ? "Item Updated!" : "Item Published!");
+      handleCancelEdit();
+      fetchItems();
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this item?")) return;
+    const { error } = await supabase.from("products").delete().eq("id", id);
+    if (!error) fetchItems();
+  };
+
+  const filteredItems = items.filter(
+    (item) =>
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="min-h-screen bg-black text-white p-4 md:p-12">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-8">
+        {/* === LEFT COLUMN: FORM === */}
+        <div className="lg:col-span-2">
+          <div className="flex justify-between items-center mb-6">
+            <h1
+              className={`text-2xl font-black uppercase ${
+                editingId ? "text-blue-500" : "text-jzee-green"
+              }`}
+            >
+              {editingId ? "Edit Item" : "Add New Item"}
+            </h1>
+            {editingId && (
+              <button
+                onClick={handleCancelEdit}
+                className="text-xs font-bold text-red-500 border border-red-500 px-2 py-1 hover:bg-red-500 hover:text-white"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+
+          <form
+            onSubmit={handleSubmit}
+            className={`space-y-4 p-6 border rounded-sm ${
+              editingId
+                ? "bg-zinc-900 border-blue-500"
+                : "bg-zinc-900 border-zinc-800"
+            }`}
+          >
+            {/* 👁️ PREVIEW AREA (ALWAYS SQUARE NOW) */}
+            <div className="bg-black p-4 border border-dashed border-zinc-700 relative group">
+              {formData.image_url ? (
+                // 🔒 FORCED ASPECT SQUARE + OBJECT COVER
+                <div className="w-full aspect-square overflow-hidden bg-zinc-800 border border-zinc-600 relative">
+                  <img
+                    src={formData.image_url}
+                    alt="Preview"
+                    className="w-full h-full object-cover transition-all duration-300"
+                    style={{ objectPosition: formData.image_position }}
+                  />
+                  {/* Hover Hint */}
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <p className="text-xs font-bold uppercase text-white">
+                      This is exactly how customers see it
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="aspect-square flex flex-col items-center justify-center text-zinc-500 text-xs font-bold uppercase bg-zinc-900">
+                  <span className="text-4xl mb-2">📷</span>
+                  <span>Tap to Select Image</span>
+                </div>
+              )}
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploading}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+
+              {uploading && (
+                <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-20">
+                  <span className="text-jzee-green text-xs font-bold animate-pulse">
+                    Compressing & Uploading...
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* 🕹️ JOYSTICK CONTROLS (Fixed Layout) */}
+            {formData.image_url && (
+              <div className="bg-zinc-950 p-4 border border-zinc-800 mt-4 rounded-sm">
+                {/* Header: Title + Values */}
+                <div className="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
+                  <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-widest">
+                    Nudge Focus
+                  </span>
+                  <span className="text-xs font-mono font-bold text-jzee-green">
+                    {formData.image_position}
+                  </span>
+                </div>
+
+                {/* The Grid: Centered & Spacious */}
+                <div className="flex justify-center">
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* TOP ROW */}
+                    <button
+                      type="button"
+                      onClick={() => nudge(-10, -10)}
+                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-zinc-400 transition-all rounded-sm flex items-center justify-center"
+                    >
+                      ↖
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => nudge(0, -10)}
+                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-white transition-all rounded-sm flex items-center justify-center"
+                    >
+                      ⬆
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => nudge(10, -10)}
+                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-zinc-400 transition-all rounded-sm flex items-center justify-center"
+                    >
+                      ↗
+                    </button>
+
+                    {/* MIDDLE ROW */}
+                    <button
+                      type="button"
+                      onClick={() => nudge(-10, 0)}
+                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-white transition-all rounded-sm flex items-center justify-center"
+                    >
+                      ⬅
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => nudge(0, 0)}
+                      className="w-10 h-10 bg-jzee-green text-black font-black border border-jzee-green hover:brightness-110 transition-all rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(34,197,94,0.4)]"
+                      title="Reset Center"
+                    >
+                      •
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => nudge(10, 0)}
+                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-white transition-all rounded-sm flex items-center justify-center"
+                    >
+                      ➡
+                    </button>
+
+                    {/* BOTTOM ROW */}
+                    <button
+                      type="button"
+                      onClick={() => nudge(-10, 10)}
+                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-zinc-400 transition-all rounded-sm flex items-center justify-center"
+                    >
+                      ↙
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => nudge(0, 10)}
+                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-white transition-all rounded-sm flex items-center justify-center"
+                    >
+                      ⬇
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => nudge(10, 10)}
+                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-zinc-400 transition-all rounded-sm flex items-center justify-center"
+                    >
+                      ↘
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-zinc-500 text-center mt-3 italic">
+                  Tap arrows to adjust image position
+                </p>
+              </div>
+            )}
+
+            {/* INPUTS */}
+            <input
+              type="text"
+              placeholder="Item Name"
+              required
+              className="w-full bg-black border border-zinc-700 p-3 text-white focus:border-white outline-none font-bold"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <select
+                className="bg-black border border-zinc-700 p-3 text-white outline-none text-sm"
+                value={formData.category}
+                onChange={(e) =>
+                  setFormData({ ...formData, category: e.target.value })
+                }
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="bg-black border border-zinc-700 p-3 text-white outline-none text-sm"
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData({ ...formData, status: e.target.value })
+                }
+              >
+                <option value="Available">Available</option>
+                <option value="In Stock">In Stock</option>
+                <option value="Dream Build">Dream Build</option>
+                <option value="Best Seller">Best Seller</option>
+                <option value="Sold Out">Sold Out</option>
+              </select>
+            </div>
+
+            <input
+              type="number"
+              placeholder="Price (PHP)"
+              required
+              className="w-full bg-black border border-zinc-700 p-3 text-white focus:border-white outline-none font-mono"
+              value={formData.price}
+              onChange={(e) =>
+                setFormData({ ...formData, price: e.target.value })
+              }
+            />
+
+            <button
+              type="submit"
+              disabled={uploading}
+              className={`w-full font-black uppercase py-4 tracking-widest transition-colors ${
+                editingId
+                  ? "bg-blue-600 hover:bg-blue-500"
+                  : "bg-white text-black hover:bg-jzee-green"
+              }`}
+            >
+              {uploading
+                ? "Wait..."
+                : editingId
+                ? "Update Item"
+                : "Publish Item"}
+            </button>
+          </form>
+        </div>
+
+        {/* === RIGHT COLUMN: INVENTORY === */}
+        <div className="lg:col-span-3 h-full overflow-hidden flex flex-col">
+          <div className="flex flex-col md:flex-row justify-between items-end md:items-center mb-4 gap-4">
+            <h2 className="text-2xl font-black text-white uppercase flex items-center gap-2">
+              Inventory{" "}
+              <span className="text-sm bg-zinc-800 px-2 py-1 rounded text-zinc-400">
+                {filteredItems.length}
+              </span>
+            </h2>
+            <input
+              type="text"
+              placeholder="Search..."
+              className="bg-zinc-900 border border-zinc-700 px-4 py-2 text-sm text-white w-full md:w-64"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex-1 overflow-y-auto pr-2 space-y-2 h-[800px] scrollbar-hide">
+            {filteredItems.map((item) => (
+              <div
+                key={item.id}
+                className={`flex gap-3 bg-zinc-900 border p-2 group items-center ${
+                  editingId === item.id
+                    ? "border-blue-500 bg-zinc-800"
+                    : "border-zinc-800 hover:border-zinc-600"
+                }`}
+              >
+                {/* THUMBNAIL ALSO USES POSITION */}
+                <img
+                  src={item.image_url}
+                  className="w-12 h-12 object-cover bg-black flex-shrink-0"
+                  style={{
+                    objectPosition: item.image_position || "center center",
+                  }}
+                />
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-white font-bold text-sm uppercase truncate">
+                    {item.name}
+                  </h4>
+                  <p className="text-jzee-green text-xs font-mono">
+                    {item.display_price}
+                  </p>
+                </div>
+                <div className="flex gap-2 pr-2">
+                  <button
+                    onClick={() => handleEdit(item)}
+                    className="p-2 text-zinc-500 hover:text-blue-400"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="p-2 text-zinc-500 hover:text-red-500"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Admin;
+
+
+
+================================================================================
+FILE PATH: src\pages\Home.jsx
+================================================================================
+
+import React, { useState } from "react";
+import Navbar from "../components/Navbar";
+import Hero from "../components/Hero";
+import Brands from "../components/Brands";
+import Catalog from "../components/Catalog";
+import Testimonials from "../components/Testimonials"; // Assuming you added this
+import Services from "../components/Services";
+import Community from "../components/Community";
+import Location from "../components/Location";
+import Footer from "../components/Footer";
+
+const Home = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  return (
+    <div className="bg-black min-h-screen">
+      <Navbar onSearch={setSearchTerm} />
+      <Hero />
+      <Brands />
+      <Catalog searchTerm={searchTerm} />
+      <Testimonials />
+      <Services />
+      <Community />
+      <Location />
+      <Footer />
+    </div>
+  );
+};
+
+export default Home;
+
+
+
+================================================================================
+FILE PATH: src\pages\Login.jsx
+================================================================================
+
+import React, { useState } from "react";
+import { supabase } from "../api/supabaseClient";
+import { useNavigate } from "react-router-dom";
+
+const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      alert("Access Denied: " + error.message);
+      setLoading(false);
+    } else {
+      // Success! Send them to the Admin panel
+      navigate("/admin");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 p-8 rounded-sm shadow-2xl">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-black text-white uppercase tracking-tighter">
+            Jzee <span className="text-jzee-green">System</span>
+          </h1>
+          <p className="text-zinc-500 text-xs uppercase tracking-[0.2em] mt-2">
+            Authorized Personnel Only
+          </p>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div>
+            <label className="block text-xs font-bold text-zinc-400 uppercase mb-2">
+              ID
+            </label>
+            <input
+              type="email"
+              required
+              className="w-full bg-black border border-zinc-700 p-4 text-white focus:border-jzee-green outline-none"
+              placeholder="admin@jzeebike.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-zinc-400 uppercase mb-2">
+              Passcode
+            </label>
+            <input
+              type="password"
+              required
+              className="w-full bg-black border border-zinc-700 p-4 text-white focus:border-jzee-green outline-none"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-white text-black font-black uppercase py-4 tracking-widest hover:bg-jzee-green transition-colors"
+          >
+            {loading ? "Verifying..." : "Enter System"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default Login;
+
+
+
+================================================================================
+FILE PATH: src\services\productService.js
+================================================================================
+
+import { supabase } from "../api/supabaseClient";
+
+export const productService = {
+  /**
+   * Fetch all products sorted by creation date (Newest first)
+   */
+  getAll: async () => {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error loading products:", error);
+      return [];
+    }
+    return data;
+  },
+
+  /**
+   * Filter by Category
+   */
+  getByCategory: async (category) => {
+    // If "All", just fetch everything
+    if (category === "All") return await productService.getAll();
+
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("category", category)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(`Error loading category ${category}:`, error);
+      return [];
+    }
+    return data;
+  },
+
+  /**
+   * Search Logic (Database-side search)
+   */
+  search: async (term) => {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .ilike("name", `%${term}%`); // ilike = Case Insensitive Search
+
+    if (error) {
+      console.error("Search error:", error);
+      return [];
+    }
+    return data;
+  },
+};
+
+
+
+================================================================================
+FILE PATH: vercel.json
+================================================================================
+
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
 
 
 
