@@ -272,7 +272,7 @@ const Catalog = ({ searchTerm }) => {
 
                 <div className="mt-8 pt-6 border-t border-zinc-800">
                   <a
-                    href={`https://m.me/100063770933795?text=Hello Ma'am Zee, interested ko sa ${selectedItem.name} (${selectedItem.display_price}). Available pa?`}
+                    href={`https://m.me/100063770933795?text=Hello Jzee Bike shop!, interested ko sa ${selectedItem.name} (${selectedItem.display_price}). Available pa?`}
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center justify-center gap-3 w-full bg-white text-black py-4 font-black uppercase tracking-widest hover:bg-jzee-green transition-all hover:scale-[1.02]"
