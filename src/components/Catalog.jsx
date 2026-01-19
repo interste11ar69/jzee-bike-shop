@@ -5,8 +5,11 @@ import { CATEGORIES } from "../model/AppConstants";
 
 const Catalog = ({ searchTerm }) => {
   const [activeCategory, setActiveCategory] = useState("All");
-  const [items, setItems] = useState([]); // Stores Real DB Data
+  const [items, setItems] = useState([]); // All items from DB
   const [isLoading, setIsLoading] = useState(true);
+
+  // 🔢 PAGINATION STATE
+  const [visibleCount, setVisibleCount] = useState(8); // Start with 8 items
 
   // 🆕 Modal State
   const [selectedItem, setSelectedItem] = useState(null);
@@ -32,6 +35,20 @@ const Catalog = ({ searchTerm }) => {
 
     fetchData();
   }, [activeCategory, searchTerm]);
+
+  // 🔄 RESET PAGINATION when filters change
+  // If I switch from "All" to "Frames", I should start at the top again.
+  useEffect(() => {
+    setVisibleCount(8);
+  }, [activeCategory, searchTerm]);
+
+  // ✂️ SLICE THE DATA (Only show what is allowed by visibleCount)
+  const visibleItems = items.slice(0, visibleCount);
+
+  // 👇 FUNCTION TO LOAD MORE
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => prev + 8); // Load 8 more
+  };
 
   return (
     <section
@@ -70,7 +87,6 @@ const Catalog = ({ searchTerm }) => {
 
       {/* --- GRID --- */}
       {isLoading ? (
-        // SKELETON LOADING STATE (Professional Touch)
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <div
@@ -80,60 +96,91 @@ const Catalog = ({ searchTerm }) => {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-          {items.length > 0 ? (
-            items.map((item) => (
-              <motion.div
-                key={item.id}
-                layoutId={`card-${item.id}`}
-                onClick={() => setSelectedItem(item)}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="group relative bg-zinc-900 border border-zinc-800 hover:border-jzee-green cursor-pointer flex flex-col h-full"
-              >
-                {/* IMAGE */}
-                <div className="aspect-square overflow-hidden relative flex-shrink-0">
-                  <motion.img
-                    layoutId={`image-${item.id}`}
-                    src={item.image_url}
-                    alt={item.name}
-                    // 👇 THIS IS THE MAGIC LINE
-                    style={{
-                      objectPosition: item.image_position || "center center",
-                    }}
-                    className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${
-                      item.status === "Sold Out" ? "grayscale opacity-50" : ""
-                    }`}
-                  />
-                  <div
-                    className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-1 uppercase bg-jzee-green text-black`}
-                  >
-                    {item.status}
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+            {visibleItems.length > 0 ? (
+              visibleItems.map((item) => (
+                <motion.div
+                  key={item.id}
+                  layoutId={`card-${item.id}`}
+                  onClick={() => setSelectedItem(item)}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="group relative bg-zinc-900 border border-zinc-800 hover:border-jzee-green cursor-pointer flex flex-col h-full"
+                >
+                  {/* IMAGE */}
+                  <div className="aspect-square overflow-hidden relative flex-shrink-0">
+                    <motion.img
+                      layoutId={`image-${item.id}`}
+                      src={item.image_url}
+                      alt={item.name}
+                      style={{
+                        objectPosition: item.image_position || "center center",
+                      }}
+                      className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${
+                        item.status === "Sold Out" ? "grayscale opacity-50" : ""
+                      }`}
+                    />
+                    <div
+                      className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-1 uppercase bg-jzee-green text-black`}
+                    >
+                      {item.status}
+                    </div>
                   </div>
-                </div>
 
-                {/* INFO */}
-                <div className="p-4 flex flex-col flex-1">
-                  <p className="text-zinc-500 text-[10px] uppercase tracking-widest mb-1">
-                    {item.category}
-                  </p>
-                  <h3 className="text-sm md:text-lg font-bold text-white uppercase leading-tight mb-4">
-                    {item.name}
-                  </h3>
-                  <div className="mt-auto pt-4 border-t border-zinc-800">
-                    <span className="text-white font-mono text-sm">
-                      {item.display_price}
-                    </span>
+                  {/* INFO */}
+                  <div className="p-4 flex flex-col flex-1">
+                    <p className="text-zinc-500 text-[10px] uppercase tracking-widest mb-1">
+                      {item.category}
+                    </p>
+                    <h3 className="text-sm md:text-lg font-bold text-white uppercase leading-tight mb-4">
+                      {item.name}
+                    </h3>
+                    <div className="mt-auto pt-4 border-t border-zinc-800">
+                      <span className="text-white font-mono text-sm">
+                        {item.display_price}
+                      </span>
+                    </div>
                   </div>
+                </motion.div>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-20 text-zinc-500">
+                <p className="uppercase tracking-widest">No items found.</p>
+              </div>
+            )}
+          </div>
+
+          {/* 👇 LOAD MORE BUTTON (Only shows if there are hidden items) */}
+          {visibleCount < items.length && (
+            <div className="mt-16 flex justify-center">
+              <button
+                onClick={handleLoadMore}
+                className="group flex flex-col items-center gap-2"
+              >
+                <div className="w-12 h-12 rounded-full border border-zinc-700 flex items-center justify-center text-zinc-500 group-hover:border-jzee-green group-hover:text-jzee-green transition-all duration-300">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className="w-6 h-6 animate-bounce"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                    />
+                  </svg>
                 </div>
-              </motion.div>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-20 text-zinc-500">
-              <p className="uppercase tracking-widest">No items found.</p>
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500 group-hover:text-white transition-colors">
+                  Load More Products ({items.length - visibleCount} Left)
+                </span>
+              </button>
             </div>
           )}
-        </div>
+        </>
       )}
 
       {/* --- MODAL (POPUP) --- */}
@@ -160,6 +207,12 @@ const Catalog = ({ searchTerm }) => {
               </button>
 
               <div className="flex flex-col max-h-[80vh] overflow-y-auto">
+                {/* 
+                   👇 FIXED: MODAL IMAGE NOW USES THE POSITION TOO 
+                   Usually, for the modal, we want "object-contain" (Fit whole image)
+                   BUT if you want it to respect the crop, change to object-cover.
+                   Keeping object-contain allows user to see the full uncropped image details.
+                */}
                 <div className="h-64 w-full bg-black relative flex-shrink-0">
                   <motion.img
                     layoutId={`image-${selectedItem.id}`}
