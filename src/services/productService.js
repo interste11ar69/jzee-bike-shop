@@ -25,9 +25,11 @@ export const productService = {
     // 2. Start the Query
     let query = supabase
       .from("products")
-      .select("*", { count: "exact" }) // 'count' tells us the Total items in DB (e.g., 100)
+      .select("*", { count: "exact" })
+      // 👇 FIX: Add a secondary sort to prevent duplicates/glitches
       .order("created_at", { ascending: false })
-      .range(from, to); // 👈 THIS IS THE MAGIC (Server-Side Pagination)
+      .order("id", { ascending: true })
+      .range(from, to);
 
     // 3. Apply Category Filter
     if (category !== "All") {

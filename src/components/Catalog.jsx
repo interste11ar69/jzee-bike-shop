@@ -5,32 +5,27 @@ import { CATEGORIES } from "../model/AppConstants";
 
 const Catalog = ({ searchTerm }) => {
   const [activeCategory, setActiveCategory] = useState("All");
-
-  // 📦 DATA STATE
-  const [items, setItems] = useState([]); // The list of products
-  const [totalCount, setTotalCount] = useState(0); // How many items exist in DB?
-  const [page, setPage] = useState(0); // Current page (0, 1, 2...)
+  const [items, setItems] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(0);
   const ITEMS_PER_PAGE = 8;
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false); // Specific loader for button
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // 🆕 Modal State
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // 🔄 EFFECT 1: Reset when Filter/Search changes
-  // When user types or clicks a category, we must start fresh.
+  // 🔄 RESET
   useEffect(() => {
     setPage(0);
-    setItems([]); // Clear current list
-    fetchData(0, activeCategory, searchTerm, true); // True = "This is a reset"
+    setItems([]);
+    fetchData(0, activeCategory, searchTerm, true);
   }, [activeCategory, searchTerm]);
 
-  // 📡 THE FETCH FUNCTION
+  // 📡 FETCH
   const fetchData = async (pageIndex, category, search, isReset = false) => {
-    if (isReset)
-      setIsLoading(true); // Big loader for reset
-    else setIsLoadingMore(true); // Small loader for "Load More"
+    if (isReset) setIsLoading(true);
+    else setIsLoadingMore(true);
 
     try {
       const { data, count } = await productService.getProducts({
@@ -42,11 +37,14 @@ const Catalog = ({ searchTerm }) => {
 
       setTotalCount(count || 0);
 
-      // If resetting, replace items. If loading more, append items.
       if (isReset) {
         setItems(data);
       } else {
-        setItems((prevItems) => [...prevItems, ...data]);
+        // 👇 SAFETY: Filter out any duplicates before adding
+        setItems((prev) => {
+          const newItems = data.filter((d) => !prev.some((p) => p.id === d.id));
+          return [...prev, ...newItems];
+        });
       }
     } catch (error) {
       console.error("Catalog Error:", error);
@@ -56,7 +54,6 @@ const Catalog = ({ searchTerm }) => {
     }
   };
 
-  // 👇 HANDLER: Load Next Page
   const handleLoadMore = () => {
     const nextPage = page + 1;
     setPage(nextPage);
@@ -99,9 +96,9 @@ const Catalog = ({ searchTerm }) => {
       </div>
 
       {/* --- GRID --- */}
-      {/* Show Skeleton only on Initial Load (Page 0) */}
       {isLoading && page === 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        // 👇 FIXED: Grid stays at 4 columns max (lg:grid-cols-4)
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div
               key={i}
@@ -111,12 +108,14 @@ const Catalog = ({ searchTerm }) => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+          {/* 👇 FIXED: Stays 4 columns until the screen is MASSIVE (2000px+) */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 min-[1800px]:grid-cols-6 min-[2300px]:grid-cols-7 gap-4 md:gap-8">
+            {" "}
             {items.length > 0 ? (
               items.map((item) => (
                 <motion.div
                   key={item.id}
-                  layoutId={`card-${item.id}`}
+                  // ❌ REMOVED layoutId to prevent "Black Blank" glitches
                   onClick={() => setSelectedItem(item)}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -125,7 +124,7 @@ const Catalog = ({ searchTerm }) => {
                   {/* IMAGE */}
                   <div className="aspect-square overflow-hidden relative flex-shrink-0">
                     <motion.img
-                      layoutId={`image-${item.id}`}
+                      // ❌ REMOVED layoutId here too
                       src={item.image_url}
                       alt={item.name}
                       style={{
@@ -165,8 +164,7 @@ const Catalog = ({ searchTerm }) => {
             )}
           </div>
 
-          {/* 👇 SMART LOAD MORE BUTTON */}
-          {/* Only show if we haven't loaded everything yet */}
+          {/* LOAD MORE BUTTON */}
           {items.length < totalCount && (
             <div className="mt-16 flex justify-center">
               <button
@@ -178,10 +176,8 @@ const Catalog = ({ searchTerm }) => {
                   className={`w-12 h-12 rounded-full border border-zinc-700 flex items-center justify-center text-zinc-500 group-hover:border-jzee-green group-hover:text-jzee-green transition-all duration-300 ${isLoadingMore ? "animate-spin border-t-jzee-green" : ""}`}
                 >
                   {isLoadingMore ? (
-                    // Spinner Icon
                     <div className="w-2 h-2 bg-jzee-green rounded-full"></div>
                   ) : (
-                    // Arrow Icon
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -213,7 +209,6 @@ const Catalog = ({ searchTerm }) => {
       <AnimatePresence>
         {selectedItem && (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-4 md:py-8">
-            {/* BACKDROP: Fast Fade */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -223,18 +218,13 @@ const Catalog = ({ searchTerm }) => {
               className="absolute inset-0 bg-black/95 backdrop-blur-sm"
             />
 
-            {/* CARD: The "Tech Snap" Animation */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{
-                duration: 0.2, // ⚡ Fast (200ms)
-                ease: "circOut", // ⚡ Sharp stop (No wobble)
-              }}
+              transition={{ duration: 0.2, ease: "circOut" }}
               className="relative w-full max-w-5xl bg-zinc-900 border border-zinc-800 overflow-hidden shadow-2xl z-50 rounded-sm flex flex-col md:flex-row max-h-[90vh] md:h-auto"
             >
-              {/* CLOSE BUTTON */}
               <button
                 onClick={() => setSelectedItem(null)}
                 className="absolute top-4 right-4 z-50 bg-black/50 text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white hover:text-black transition-colors"
@@ -242,9 +232,7 @@ const Catalog = ({ searchTerm }) => {
                 ✕
               </button>
 
-              {/* 📸 LEFT SIDE: IMAGE */}
               <div className="w-full md:w-3/5 bg-black relative flex items-center justify-center h-64 md:h-auto border-b md:border-b-0 md:border-r border-zinc-800">
-                {/* Removed layoutId here too to stop the image from 'flying' awkwardly */}
                 <motion.img
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -256,29 +244,24 @@ const Catalog = ({ searchTerm }) => {
                       selectedItem.image_position || "center center",
                   }}
                 />
-
                 <div className="absolute top-4 left-4 bg-jzee-green text-black px-3 py-1 text-xs font-black uppercase tracking-widest">
                   {selectedItem.status}
                 </div>
               </div>
 
-              {/* 📝 RIGHT SIDE: DETAILS */}
               <div className="w-full md:w-2/5 p-6 md:p-10 flex flex-col justify-center bg-zinc-900 overflow-y-auto">
                 <div className="mb-auto">
                   <p className="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-2">
                     {selectedItem.category}
                   </p>
-
                   <h2 className="text-2xl md:text-4xl font-black text-white uppercase italic leading-[0.9] mb-4">
                     {selectedItem.name}
                   </h2>
-
                   <div className="inline-block border border-jzee-green/30 bg-jzee-green/5 px-4 py-2 mb-6">
                     <p className="text-xl md:text-2xl font-mono text-jzee-green font-bold">
                       {selectedItem.display_price}
                     </p>
                   </div>
-
                   <div className="prose prose-invert">
                     <p className="text-zinc-400 text-sm leading-relaxed">
                       {selectedItem.description ||
