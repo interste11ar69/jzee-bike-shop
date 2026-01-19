@@ -2,16 +2,25 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
+import Login from "./pages/Login";
+import ProtectedRoute from "./components/ProtectedRoute"; // <--- Import Guard
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* The Shop Page */}
         <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
 
-        {/* The Secret Admin Page */}
-        <Route path="/admin" element={<Admin />} />
+        {/* 🔒 WRAP THE ADMIN ROUTE */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <Admin />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Router>
   );
