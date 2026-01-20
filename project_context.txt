@@ -1,4 +1,4 @@
-PROJECT CONTEXT GENERATED AT: 2026-01-19T07:27:52.268Z
+PROJECT CONTEXT GENERATED AT: 2026-01-20T05:26:33.043Z
 
 
 ================================================================================
@@ -93,7 +93,8 @@ FILE PATH: package.json
     "framer-motion": "^12.24.10",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.12.0"
+    "react-router": "^6.28.0",
+    "react-router-dom": "^6.28.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
@@ -267,49 +268,59 @@ import { CATEGORIES } from "../model/AppConstants";
 
 const Catalog = ({ searchTerm }) => {
   const [activeCategory, setActiveCategory] = useState("All");
-  const [items, setItems] = useState([]); // All items from DB
+  const [items, setItems] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(0);
+  const ITEMS_PER_PAGE = 8;
+
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // 🔢 PAGINATION STATE
-  const [visibleCount, setVisibleCount] = useState(8); // Start with 8 items
-
-  // 🆕 Modal State
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // 📡 FETCHING DATA
+  // 🔄 RESET
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        let data;
-        if (searchTerm) {
-          data = await productService.search(searchTerm);
-        } else {
-          data = await productService.getByCategory(activeCategory);
-        }
-        setItems(data || []);
-      } catch (error) {
-        console.error("Failed to fetch inventory:", error);
-      } finally {
-        setIsLoading(false);
+    setPage(0);
+    setItems([]);
+    fetchData(0, activeCategory, searchTerm, true);
+  }, [activeCategory, searchTerm]);
+
+  // 📡 FETCH
+  const fetchData = async (pageIndex, category, search, isReset = false) => {
+    if (isReset) setIsLoading(true);
+    else setIsLoadingMore(true);
+
+    try {
+      const { data, count } = await productService.getProducts({
+        page: pageIndex,
+        limit: ITEMS_PER_PAGE,
+        category: category,
+        searchTerm: search,
+      });
+
+      setTotalCount(count || 0);
+
+      if (isReset) {
+        setItems(data);
+      } else {
+        // 👇 SAFETY: Filter out any duplicates before adding
+        setItems((prev) => {
+          const newItems = data.filter((d) => !prev.some((p) => p.id === d.id));
+          return [...prev, ...newItems];
+        });
       }
-    };
+    } catch (error) {
+      console.error("Catalog Error:", error);
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  };
 
-    fetchData();
-  }, [activeCategory, searchTerm]);
-
-  // 🔄 RESET PAGINATION when filters change
-  // If I switch from "All" to "Frames", I should start at the top again.
-  useEffect(() => {
-    setVisibleCount(8);
-  }, [activeCategory, searchTerm]);
-
-  // ✂️ SLICE THE DATA (Only show what is allowed by visibleCount)
-  const visibleItems = items.slice(0, visibleCount);
-
-  // 👇 FUNCTION TO LOAD MORE
   const handleLoadMore = () => {
-    setVisibleCount((prev) => prev + 8); // Load 8 more
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchData(nextPage, activeCategory, searchTerm, false);
   };
 
   return (
@@ -348,9 +359,10 @@ const Catalog = ({ searchTerm }) => {
       </div>
 
       {/* --- GRID --- */}
-      {isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
+      {isLoading && page === 0 ? (
+        // 👇 FIXED: Grid stays at 4 columns max (lg:grid-cols-4)
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div
               key={i}
               className="h-64 bg-zinc-900/50 animate-pulse rounded-sm border border-zinc-800"
@@ -359,12 +371,14 @@ const Catalog = ({ searchTerm }) => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-            {visibleItems.length > 0 ? (
-              visibleItems.map((item) => (
+          {/* 👇 FIXED: Stays 4 columns until the screen is MASSIVE (2000px+) */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 min-[1800px]:grid-cols-6 min-[2300px]:grid-cols-7 gap-4 md:gap-8">
+            {" "}
+            {items.length > 0 ? (
+              items.map((item) => (
                 <motion.div
                   key={item.id}
-                  layoutId={`card-${item.id}`}
+                  // ❌ REMOVED layoutId to prevent "Black Blank" glitches
                   onClick={() => setSelectedItem(item)}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -373,7 +387,7 @@ const Catalog = ({ searchTerm }) => {
                   {/* IMAGE */}
                   <div className="aspect-square overflow-hidden relative flex-shrink-0">
                     <motion.img
-                      layoutId={`image-${item.id}`}
+                      // ❌ REMOVED layoutId here too
                       src={item.image_url}
                       alt={item.name}
                       style={{
@@ -413,31 +427,40 @@ const Catalog = ({ searchTerm }) => {
             )}
           </div>
 
-          {/* 👇 LOAD MORE BUTTON (Only shows if there are hidden items) */}
-          {visibleCount < items.length && (
+          {/* LOAD MORE BUTTON */}
+          {items.length < totalCount && (
             <div className="mt-16 flex justify-center">
               <button
                 onClick={handleLoadMore}
-                className="group flex flex-col items-center gap-2"
+                disabled={isLoadingMore}
+                className="group flex flex-col items-center gap-2 disabled:opacity-50"
               >
-                <div className="w-12 h-12 rounded-full border border-zinc-700 flex items-center justify-center text-zinc-500 group-hover:border-jzee-green group-hover:text-jzee-green transition-all duration-300">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                    stroke="currentColor"
-                    className="w-6 h-6 animate-bounce"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="m19.5 8.25-7.5 7.5-7.5-7.5"
-                    />
-                  </svg>
+                <div
+                  className={`w-12 h-12 rounded-full border border-zinc-700 flex items-center justify-center text-zinc-500 group-hover:border-jzee-green group-hover:text-jzee-green transition-all duration-300 ${isLoadingMore ? "animate-spin border-t-jzee-green" : ""}`}
+                >
+                  {isLoadingMore ? (
+                    <div className="w-2 h-2 bg-jzee-green rounded-full"></div>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                      className="w-6 h-6 animate-bounce"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                      />
+                    </svg>
+                  )}
                 </div>
                 <span className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500 group-hover:text-white transition-colors">
-                  Load More Products ({items.length - visibleCount} Left)
+                  {isLoadingMore
+                    ? "Loading..."
+                    : `Load More (${totalCount - items.length} Left)`}
                 </span>
               </button>
             </div>
@@ -448,65 +471,100 @@ const Catalog = ({ searchTerm }) => {
       {/* --- MODAL (POPUP) --- */}
       <AnimatePresence>
         {selectedItem && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-4 md:py-8">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
               onClick={() => setSelectedItem(null)}
-              className="absolute inset-0 bg-black/90 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/95 backdrop-blur-sm"
             />
 
             <motion.div
-              layoutId={`card-${selectedItem.id}`}
-              className="relative w-full max-w-lg bg-zinc-900 border border-jzee-green overflow-hidden shadow-2xl z-50 rounded-sm"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2, ease: "circOut" }}
+              className="relative w-full max-w-5xl bg-zinc-900 border border-zinc-800 overflow-hidden shadow-2xl z-50 rounded-sm flex flex-col md:flex-row max-h-[90vh] md:h-auto"
             >
               <button
                 onClick={() => setSelectedItem(null)}
-                className="absolute top-4 right-4 z-20 bg-black/50 text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-jzee-green hover:text-black transition-colors"
+                className="absolute top-4 right-4 z-50 bg-black/50 text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white hover:text-black transition-colors"
               >
                 ✕
               </button>
 
-              <div className="flex flex-col max-h-[80vh] overflow-y-auto">
-                {/* 
-                   👇 FIXED: MODAL IMAGE NOW USES THE POSITION TOO 
-                   Usually, for the modal, we want "object-contain" (Fit whole image)
-                   BUT if you want it to respect the crop, change to object-cover.
-                   Keeping object-contain allows user to see the full uncropped image details.
-                */}
-                <div className="h-64 w-full bg-black relative flex-shrink-0">
-                  <motion.img
-                    layoutId={`image-${selectedItem.id}`}
-                    src={selectedItem.image_url}
-                    className="w-full h-full object-contain"
-                  />
+              <div className="w-full md:w-3/5 bg-black relative flex items-center justify-center h-64 md:h-auto border-b md:border-b-0 md:border-r border-zinc-800">
+                <motion.img
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1, duration: 0.3 }}
+                  src={selectedItem.image_url}
+                  className="w-full h-full object-contain p-4 md:p-8"
+                  style={{
+                    objectPosition:
+                      selectedItem.image_position || "center center",
+                  }}
+                />
+                <div className="absolute top-4 left-4 bg-jzee-green text-black px-3 py-1 text-xs font-black uppercase tracking-widest">
+                  {selectedItem.status}
                 </div>
+              </div>
 
-                <div className="p-8">
-                  <span className="text-jzee-green text-xs font-black uppercase tracking-widest">
+              <div className="w-full md:w-2/5 p-6 md:p-10 flex flex-col justify-center bg-zinc-900 overflow-y-auto">
+                <div className="mb-auto">
+                  <p className="text-zinc-500 text-[10px] uppercase tracking-[0.2em] mb-2">
                     {selectedItem.category}
-                  </span>
-                  <h2 className="text-3xl font-black text-white uppercase italic leading-none mb-2 mt-2">
+                  </p>
+                  <h2 className="text-2xl md:text-4xl font-black text-white uppercase italic leading-[0.9] mb-4">
                     {selectedItem.name}
                   </h2>
-                  <p className="text-2xl font-mono text-zinc-300 mb-6">
-                    {selectedItem.display_price}
-                  </p>
+                  <div className="inline-block border border-jzee-green/30 bg-jzee-green/5 px-4 py-2 mb-6">
+                    <p className="text-xl md:text-2xl font-mono text-jzee-green font-bold">
+                      {selectedItem.display_price}
+                    </p>
+                  </div>
+                  <div className="prose prose-invert">
+                    <p className="text-zinc-400 text-sm leading-relaxed">
+                      {selectedItem.description ||
+                        "Inquire for full specs, compatibility, and latest pricing adjustments."}
+                    </p>
+                  </div>
+                </div>
 
-                  <p className="text-zinc-400 text-sm leading-relaxed mb-8">
-                    {selectedItem.description ||
-                      "Inquire for full specs and details."}
-                  </p>
-
+                <div className="mt-8 pt-6 border-t border-zinc-800">
+                  {/* SMART INQUIRE BUTTON */}
                   <a
-                    href={`https://m.me/100063770933795?text=Hello Ma'am Zee, is the ${selectedItem.name} still available?`}
+                    href={`https://m.me/100063770933795?text=${
+                      selectedItem.status === "Sold Out"
+                        ? `Good day Jzee Bikes, ask unta ko if kanus-a mo mag restock ani: ${selectedItem.name}?`
+                        : `Good day Jzee Bikes, ask unta ko if available pa ang ${selectedItem.name} (${selectedItem.display_price})?`
+                    }`}
                     target="_blank"
                     rel="noreferrer"
-                    className="block w-full bg-white text-black py-4 font-black uppercase text-center hover:bg-jzee-green transition-colors tracking-widest"
+                    className={`flex items-center justify-center gap-3 w-full py-4 font-black uppercase tracking-widest transition-all hover:scale-[1.02] ${
+                      selectedItem.status === "Sold Out"
+                        ? "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white" // Grey for Sold Out
+                        : "bg-white text-black hover:bg-jzee-green" // White/Green for Available
+                    }`}
                   >
-                    Inquire via Messenger
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
+                      <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
+                    </svg>
+                    {selectedItem.status === "Sold Out"
+                      ? "Inquire Restock"
+                      : "Inquire Now"}
                   </a>
+                  <p className="text-center text-zinc-600 text-[9px] uppercase tracking-widest mt-3">
+                    Direct Message to Owner
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -1280,10 +1338,22 @@ const ProtectedRoute = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // 👇 PROFESSIONAL LOADING STATE
   if (loading)
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        Loading Access...
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4">
+        {/* Pulsing Logo */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-jzee-green blur-xl opacity-20 animate-pulse"></div>
+          <img
+            src="/logo.png"
+            alt="Loading..."
+            className="w-16 h-16 md:w-20 md:h-20 relative z-10 grayscale opacity-80 animate-pulse"
+          />
+        </div>
+        <p className="text-zinc-600 text-[10px] uppercase tracking-[0.3em] font-bold animate-pulse">
+          Verifying Access...
+        </p>
       </div>
     );
 
@@ -1599,23 +1669,84 @@ export default Services;
 FILE PATH: src\components\Testimonials.jsx
 ================================================================================
 
-import React from "react";
+import React, { useRef } from "react";
 import { TESTIMONIALS } from "../model/AppConstants";
 
 const Testimonials = () => {
+  const scrollRef = useRef(null);
+
+  // 🕹️ SCROLL LOGIC
+  const scroll = (direction) => {
+    const { current } = scrollRef;
+    if (current) {
+      // Scroll by 400px (approx one card width)
+      const scrollAmount = direction === "left" ? -400 : 400;
+      current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
+
   return (
-    <section className="bg-zinc-950 border-t border-zinc-900 py-24 overflow-hidden">
-      <div className="px-4 md:px-12 mb-12">
-        <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter">
-          Legit <span className="text-jzee-green">Check</span>
-        </h2>
-        <p className="text-zinc-500 text-sm uppercase tracking-widest mt-2">
-          Real riders. Real feedback.
-        </p>
+    <section className="bg-zinc-950 border-t border-zinc-900 py-24 overflow-hidden relative">
+      <div className="px-4 md:px-12 mb-12 flex flex-col md:flex-row justify-between items-end gap-6">
+        {/* HEADER */}
+        <div>
+          <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter">
+            Legit <span className="text-jzee-green">Check</span>
+          </h2>
+          <p className="text-zinc-500 text-sm uppercase tracking-widest mt-2">
+            Feedback from our Biker Friends.
+          </p>
+        </div>
+
+        {/* 🕹️ NAVIGATION ARROWS (The Fix) */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => scroll("left")}
+            className="w-12 h-12 rounded-full border border-zinc-700 bg-zinc-900 text-white flex items-center justify-center hover:border-jzee-green hover:text-jzee-green transition-all active:scale-95"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.75 19.5 8.25 12l7.5-7.5"
+              />
+            </svg>
+          </button>
+          <button
+            onClick={() => scroll("right")}
+            className="w-12 h-12 rounded-full border border-zinc-700 bg-zinc-900 text-white flex items-center justify-center hover:border-jzee-green hover:text-jzee-green transition-all active:scale-95"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m8.25 4.5 7.5 7.5-7.5 7.5"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* HORIZONTAL SCROLL CONTAINER */}
-      <div className="flex overflow-x-auto gap-6 px-4 md:px-12 pb-8 scrollbar-hide snap-x snap-mandatory">
+      {/* Added 'ref={scrollRef}' to link the buttons to this div */}
+      <div
+        ref={scrollRef}
+        className="flex overflow-x-auto gap-6 px-4 md:px-12 pb-8 scrollbar-hide snap-x snap-mandatory scroll-smooth"
+      >
         {TESTIMONIALS.map((t) => (
           <div
             key={t.id}
@@ -1815,6 +1946,7 @@ export const PRODUCT_STATUS = {
   BUDGET_KING: "Budget King",
   BEST_SELLER: "Best Seller",
   RESTOCKED: "Restocked",
+  HIDDEN: "Hidden",
 };
 
 // 🌟 SOCIAL PROOF
@@ -1890,41 +2022,41 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "../api/supabaseClient";
 import { CATEGORIES } from "../model/AppConstants";
 import imageCompression from "browser-image-compression";
+import { useNavigate } from "react-router-dom"; // 👈 Add this
 
 const Admin = () => {
   const [uploading, setUploading] = useState(false);
+  //logout
+  const navigate = useNavigate();
+
+  // 📦 DATA STATE
   const [items, setItems] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(0);
+  const ITEMS_PER_PAGE = 20;
+  const [isLoadingList, setIsLoadingList] = useState(false);
+
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // 🧮 HELPER: Convert "50% 50%" string to numbers {x: 50, y: 50}
+  // 🧮 HELPER
   const parsePosition = (posString) => {
     if (!posString) return { x: 50, y: 50 };
-
     const parts = posString.split(" ");
     if (parts.length === 2 && parts[0].includes("%")) {
-      return {
-        x: parseInt(parts[0]),
-        y: parseInt(parts[1]),
-      };
+      return { x: parseInt(parts[0]), y: parseInt(parts[1]) };
     }
-    return { x: 50, y: 50 }; // Default fallback
+    return { x: 50, y: 50 };
   };
 
-  // 🎯 NUMERIC POSITION STATE (0-100)
   const [pos, setPos] = useState({ x: 50, y: 50 });
 
-  // 🕹️ THE NUDGE LOGIC (Moves by 10%)
   const nudge = (dx, dy) => {
     setPos((prev) => {
-      // Calculate new position (Clamp between 0% and 100%)
       const newX = Math.max(0, Math.min(100, prev.x + dx));
       const newY = Math.max(0, Math.min(100, prev.y + dy));
-
-      // Update Form Data immediately as a string
       const newString = `${newX}% ${newY}%`;
       setFormData((f) => ({ ...f, image_position: newString }));
-
       return { x: newX, y: newY };
     });
   };
@@ -1939,17 +2071,52 @@ const Admin = () => {
     image_position: "center center",
   });
 
-  const fetchItems = async () => {
-    const { data, error } = await supabase
+  // 📡 FETCH ITEMS (Admin sees EVERYTHING, including Hidden)
+  const fetchItems = async (pageIndex = 0, search = "", isReset = false) => {
+    setIsLoadingList(true);
+
+    const from = pageIndex * ITEMS_PER_PAGE;
+    const to = from + ITEMS_PER_PAGE - 1;
+
+    let query = supabase
       .from("products")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (!error) setItems(data);
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(from, to);
+
+    if (search) {
+      query = query.ilike("name", `%${search}%`);
+    }
+
+    const { data, error, count } = await query;
+
+    if (!error) {
+      setTotalCount(count || 0);
+      if (isReset) {
+        setItems(data);
+      } else {
+        setItems((prev) => [...prev, ...data]);
+      }
+    }
+    setIsLoadingList(false);
   };
 
   useEffect(() => {
-    fetchItems();
+    fetchItems(0, "", true);
   }, []);
+
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearchTerm(val);
+    setPage(0);
+    fetchItems(0, val, true);
+  };
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchItems(nextPage, searchTerm, false);
+  };
 
   const handleImageUpload = async (e) => {
     try {
@@ -1980,8 +2147,9 @@ const Admin = () => {
       setFormData({
         ...formData,
         image_url: data.publicUrl,
-        image_position: "center center",
+        image_position: "50% 50%",
       });
+      setPos({ x: 50, y: 50 });
     } catch (error) {
       alert("Error: " + error.message);
     } finally {
@@ -1989,16 +2157,10 @@ const Admin = () => {
     }
   };
 
-  // ✏️ START EDITING (Populate Form & Sync Joystick)
   const handleEdit = (item) => {
     setEditingId(item.id);
-
-    // 1. Convert DB string (e.g., "50% 20%") to numbers for the joystick state
-    // This ensures that when you click 'Up', it starts from the current position
     const currentPos = parsePosition(item.image_position);
     setPos(currentPos);
-
-    // 2. Populate the form data
     setFormData({
       name: item.name,
       category: item.category,
@@ -2006,11 +2168,8 @@ const Admin = () => {
       status: item.status,
       description: item.description || "",
       image_url: item.image_url,
-      // If database has no position, default to Center (50% 50%)
       image_position: item.image_position || "50% 50%",
     });
-
-    // 3. Scroll to top so user sees the form immediately
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -2032,7 +2191,6 @@ const Admin = () => {
     if (!formData.image_url) return alert("Please upload an image first!");
 
     const display_price = `₱${parseInt(formData.price).toLocaleString()}`;
-
     const productData = {
       name: formData.name,
       category: formData.category,
@@ -2062,21 +2220,29 @@ const Admin = () => {
     else {
       alert(editingId ? "Item Updated!" : "Item Published!");
       handleCancelEdit();
-      fetchItems();
+      setPage(0);
+      fetchItems(0, searchTerm, true);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this item?")) return;
+    if (
+      !window.confirm(
+        "Delete this item? This cannot be undone. Use 'Hidden' status to Archive instead.",
+      )
+    )
+      return;
     const { error } = await supabase.from("products").delete().eq("id", id);
-    if (!error) fetchItems();
+    if (!error) {
+      setPage(0);
+      fetchItems(0, searchTerm, true);
+    }
   };
 
-  const filteredItems = items.filter(
-    (item) =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-12">
@@ -2085,9 +2251,7 @@ const Admin = () => {
         <div className="lg:col-span-2">
           <div className="flex justify-between items-center mb-6">
             <h1
-              className={`text-2xl font-black uppercase ${
-                editingId ? "text-blue-500" : "text-jzee-green"
-              }`}
+              className={`text-2xl font-black uppercase ${editingId ? "text-blue-500" : "text-jzee-green"}`}
             >
               {editingId ? "Edit Item" : "Add New Item"}
             </h1>
@@ -2103,16 +2267,11 @@ const Admin = () => {
 
           <form
             onSubmit={handleSubmit}
-            className={`space-y-4 p-6 border rounded-sm ${
-              editingId
-                ? "bg-zinc-900 border-blue-500"
-                : "bg-zinc-900 border-zinc-800"
-            }`}
+            className={`space-y-4 p-6 border rounded-sm ${editingId ? "bg-zinc-900 border-blue-500" : "bg-zinc-900 border-zinc-800"}`}
           >
-            {/* 👁️ PREVIEW AREA (ALWAYS SQUARE NOW) */}
+            {/* PREVIEW AREA */}
             <div className="bg-black p-4 border border-dashed border-zinc-700 relative group">
               {formData.image_url ? (
-                // 🔒 FORCED ASPECT SQUARE + OBJECT COVER
                 <div className="w-full aspect-square overflow-hidden bg-zinc-800 border border-zinc-600 relative">
                   <img
                     src={formData.image_url}
@@ -2120,12 +2279,6 @@ const Admin = () => {
                     className="w-full h-full object-cover transition-all duration-300"
                     style={{ objectPosition: formData.image_position }}
                   />
-                  {/* Hover Hint */}
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    <p className="text-xs font-bold uppercase text-white">
-                      This is exactly how customers see it
-                    </p>
-                  </div>
                 </div>
               ) : (
                 <div className="aspect-square flex flex-col items-center justify-center text-zinc-500 text-xs font-bold uppercase bg-zinc-900">
@@ -2133,7 +2286,6 @@ const Admin = () => {
                   <span>Tap to Select Image</span>
                 </div>
               )}
-
               <input
                 type="file"
                 accept="image/*"
@@ -2141,20 +2293,18 @@ const Admin = () => {
                 disabled={uploading}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
-
               {uploading && (
                 <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-20">
                   <span className="text-jzee-green text-xs font-bold animate-pulse">
-                    Compressing & Uploading...
+                    Compressing...
                   </span>
                 </div>
               )}
             </div>
 
-            {/* 🕹️ JOYSTICK CONTROLS (Fixed Layout) */}
+            {/* JOYSTICK */}
             {formData.image_url && (
               <div className="bg-zinc-950 p-4 border border-zinc-800 mt-4 rounded-sm">
-                {/* Header: Title + Values */}
                 <div className="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
                   <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-widest">
                     Nudge Focus
@@ -2163,82 +2313,73 @@ const Admin = () => {
                     {formData.image_position}
                   </span>
                 </div>
-
-                {/* The Grid: Centered & Spacious */}
                 <div className="flex justify-center">
                   <div className="grid grid-cols-3 gap-2">
-                    {/* TOP ROW */}
                     <button
                       type="button"
                       onClick={() => nudge(-10, -10)}
-                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-zinc-400 transition-all rounded-sm flex items-center justify-center"
+                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-zinc-400 rounded-sm flex items-center justify-center"
                     >
                       ↖
                     </button>
                     <button
                       type="button"
                       onClick={() => nudge(0, -10)}
-                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-white transition-all rounded-sm flex items-center justify-center"
+                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-white rounded-sm flex items-center justify-center"
                     >
                       ⬆
                     </button>
                     <button
                       type="button"
                       onClick={() => nudge(10, -10)}
-                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-zinc-400 transition-all rounded-sm flex items-center justify-center"
+                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-zinc-400 rounded-sm flex items-center justify-center"
                     >
                       ↗
                     </button>
-
-                    {/* MIDDLE ROW */}
                     <button
                       type="button"
                       onClick={() => nudge(-10, 0)}
-                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-white transition-all rounded-sm flex items-center justify-center"
+                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-white rounded-sm flex items-center justify-center"
                     >
                       ⬅
                     </button>
                     <button
                       type="button"
                       onClick={() => nudge(0, 0)}
-                      className="w-10 h-10 bg-jzee-green text-black font-black border border-jzee-green hover:brightness-110 transition-all rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(34,197,94,0.4)]"
-                      title="Reset Center"
+                      className="w-10 h-10 bg-jzee-green text-black font-black border border-jzee-green hover:brightness-110 rounded-full flex items-center justify-center"
                     >
                       •
                     </button>
                     <button
                       type="button"
                       onClick={() => nudge(10, 0)}
-                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-white transition-all rounded-sm flex items-center justify-center"
+                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-white rounded-sm flex items-center justify-center"
                     >
                       ➡
                     </button>
-
-                    {/* BOTTOM ROW */}
                     <button
                       type="button"
                       onClick={() => nudge(-10, 10)}
-                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-zinc-400 transition-all rounded-sm flex items-center justify-center"
+                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-zinc-400 rounded-sm flex items-center justify-center"
                     >
                       ↙
                     </button>
                     <button
                       type="button"
                       onClick={() => nudge(0, 10)}
-                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-white transition-all rounded-sm flex items-center justify-center"
+                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-white rounded-sm flex items-center justify-center"
                     >
                       ⬇
                     </button>
                     <button
                       type="button"
                       onClick={() => nudge(10, 10)}
-                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-zinc-400 transition-all rounded-sm flex items-center justify-center"
+                      className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-zinc-400 rounded-sm flex items-center justify-center"
                     >
                       ↘
                     </button>
                   </div>
                 </div>
-
                 <p className="text-[10px] text-zinc-500 text-center mt-3 italic">
                   Tap arrows to adjust image position
                 </p>
@@ -2256,7 +2397,6 @@ const Admin = () => {
                 setFormData({ ...formData, name: e.target.value })
               }
             />
-
             <div className="grid grid-cols-2 gap-4">
               <select
                 className="bg-black border border-zinc-700 p-3 text-white outline-none text-sm"
@@ -2271,6 +2411,8 @@ const Admin = () => {
                   </option>
                 ))}
               </select>
+
+              {/* 👇 UPDATED STATUS DROPDOWN */}
               <select
                 className="bg-black border border-zinc-700 p-3 text-white outline-none text-sm"
                 value={formData.status}
@@ -2283,9 +2425,11 @@ const Admin = () => {
                 <option value="Dream Build">Dream Build</option>
                 <option value="Best Seller">Best Seller</option>
                 <option value="Sold Out">Sold Out</option>
+                <option value="Hidden" className="bg-zinc-800 text-zinc-400">
+                  Hidden (Archive)
+                </option>
               </select>
             </div>
-
             <input
               type="number"
               placeholder="Price (PHP)"
@@ -2296,53 +2440,66 @@ const Admin = () => {
                 setFormData({ ...formData, price: e.target.value })
               }
             />
-
             <button
               type="submit"
               disabled={uploading}
-              className={`w-full font-black uppercase py-4 tracking-widest transition-colors ${
-                editingId
-                  ? "bg-blue-600 hover:bg-blue-500"
-                  : "bg-white text-black hover:bg-jzee-green"
-              }`}
+              className={`w-full font-black uppercase py-4 tracking-widest transition-colors ${editingId ? "bg-blue-600 hover:bg-blue-500" : "bg-white text-black hover:bg-jzee-green"}`}
             >
               {uploading
                 ? "Wait..."
                 : editingId
-                ? "Update Item"
-                : "Publish Item"}
+                  ? "Update Item"
+                  : "Publish Item"}
             </button>
           </form>
         </div>
 
-        {/* === RIGHT COLUMN: INVENTORY === */}
-        <div className="lg:col-span-3 h-full overflow-hidden flex flex-col">
-          <div className="flex flex-col md:flex-row justify-between items-end md:items-center mb-4 gap-4">
-            <h2 className="text-2xl font-black text-white uppercase flex items-center gap-2">
+        {/* === RIGHT COLUMN: INVENTORY LIST === */}
+        <div className="lg:col-span-3 h-full flex flex-col">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b border-zinc-800 pb-4">
+            <h2 className="text-2xl font-black text-white uppercase flex items-center gap-3">
               Inventory{" "}
-              <span className="text-sm bg-zinc-800 px-2 py-1 rounded text-zinc-400">
-                {filteredItems.length}
+              <span className="text-xs bg-jzee-green text-black px-2 py-1 font-bold rounded-sm">
+                {totalCount}
               </span>
             </h2>
-            <input
-              type="text"
-              placeholder="Search..."
-              className="bg-zinc-900 border border-zinc-700 px-4 py-2 text-sm text-white w-full md:w-64"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <div className="relative w-full md:w-64">
+              <input
+                type="text"
+                placeholder="SEARCH ITEMS..."
+                className="w-full bg-black border border-zinc-700 p-3 pl-10 text-white text-xs font-bold uppercase tracking-widest focus:border-jzee-green outline-none transition-colors placeholder-zinc-600"
+                value={searchTerm}
+                onChange={handleSearchChange}
+              />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                />
+              </svg>
+            </div>
           </div>
+
+          {/* SCROLLABLE LIST */}
           <div className="flex-1 overflow-y-auto pr-2 space-y-2 h-[800px] scrollbar-hide">
-            {filteredItems.map((item) => (
+            {items.map((item) => (
               <div
                 key={item.id}
+                // 👇 VISUAL CUE: If Hidden, make it look ghosted
                 className={`flex gap-3 bg-zinc-900 border p-2 group items-center ${
                   editingId === item.id
                     ? "border-blue-500 bg-zinc-800"
                     : "border-zinc-800 hover:border-zinc-600"
-                }`}
+                } ${item.status === "Hidden" ? "opacity-50 grayscale" : ""}`}
               >
-                {/* THUMBNAIL ALSO USES POSITION */}
                 <img
                   src={item.image_url}
                   className="w-12 h-12 object-cover bg-black flex-shrink-0"
@@ -2354,9 +2511,16 @@ const Admin = () => {
                   <h4 className="text-white font-bold text-sm uppercase truncate">
                     {item.name}
                   </h4>
-                  <p className="text-jzee-green text-xs font-mono">
-                    {item.display_price}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-jzee-green text-xs font-mono">
+                      {item.display_price}
+                    </p>
+                    {item.status === "Hidden" && (
+                      <span className="text-[9px] bg-zinc-700 text-white px-1 rounded uppercase">
+                        Archived
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-2 pr-2">
                   <button
@@ -2374,6 +2538,18 @@ const Admin = () => {
                 </div>
               </div>
             ))}
+
+            {items.length < totalCount && (
+              <button
+                onClick={handleLoadMore}
+                disabled={isLoadingList}
+                className="w-full py-3 bg-zinc-800 text-zinc-400 text-xs font-bold uppercase tracking-widest hover:bg-zinc-700 hover:text-white transition-colors mt-4"
+              >
+                {isLoadingList
+                  ? "Loading..."
+                  : `Load More (${totalCount - items.length} remaining)`}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -2520,54 +2696,64 @@ import { supabase } from "../api/supabaseClient";
 
 export const productService = {
   /**
-   * Fetch all products sorted by creation date (Newest first)
+   * THE MASTER FETCH FUNCTION
+   * Handles Pagination, Filtering, and Searching all in one.
+   *
+   * @param {number} page - Current page index (starts at 0)
+   * @param {number} limit - How many items to fetch per page (e.g., 8)
+   * @param {string} category - "All" or specific category
+   * @param {string} searchTerm - Search query
    */
-  getAll: async () => {
-    const { data, error } = await supabase
+  getProducts: async ({
+    page = 0,
+    limit = 8,
+    category = "All",
+    searchTerm = "",
+  }) => {
+    // 1. Calculate the Range for Supabase
+    // Page 0: 0 to 7
+    // Page 1: 8 to 15
+    const from = page * limit;
+    const to = from + limit - 1;
+
+    // 2. Start the Query
+    let query = supabase
       .from("products")
-      .select("*")
-      .order("created_at", { ascending: false });
+      .select("*", { count: "exact" })
+      .neq("status", "Hidden")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: true })
+      .range(from, to);
+
+    // 3. Apply Category Filter
+    if (category !== "All") {
+      query = query.eq("category", category);
+    }
+
+    // 4. Apply Search Filter
+    if (searchTerm) {
+      query = query.ilike("name", `%${searchTerm}%`);
+    }
+
+    // 5. Execute
+    const { data, error, count } = await query;
 
     if (error) {
-      console.error("Error loading products:", error);
-      return [];
+      console.error("Error fetching products:", error);
+      return { data: [], count: 0 };
     }
-    return data;
+
+    return { data, count };
   },
 
-  /**
-   * Filter by Category
-   */
-  getByCategory: async (category) => {
-    // If "All", just fetch everything
-    if (category === "All") return await productService.getAll();
-
+  // Keep this for the Modal or specific Item lookups if needed later
+  getById: async (id) => {
     const { data, error } = await supabase
       .from("products")
       .select("*")
-      .eq("category", category)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error(`Error loading category ${category}:`, error);
-      return [];
-    }
-    return data;
-  },
-
-  /**
-   * Search Logic (Database-side search)
-   */
-  search: async (term) => {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .ilike("name", `%${term}%`); // ilike = Case Insensitive Search
-
-    if (error) {
-      console.error("Search error:", error);
-      return [];
-    }
+      .eq("id", id)
+      .single();
+    if (error) return null;
     return data;
   },
 };

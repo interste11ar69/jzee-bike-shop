@@ -2,9 +2,12 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "../api/supabaseClient";
 import { CATEGORIES } from "../model/AppConstants";
 import imageCompression from "browser-image-compression";
+import { useNavigate } from "react-router-dom"; // 👈 Add this
 
 const Admin = () => {
   const [uploading, setUploading] = useState(false);
+  //logout
+  const navigate = useNavigate();
 
   // 📦 DATA STATE
   const [items, setItems] = useState([]);
@@ -109,7 +112,7 @@ const Admin = () => {
       const compressedFile = await imageCompression(file, options);
 
       const fileExt = file.name.split(".").pop();
-      const fileName = `${Math.random()}.${fileExt}`;
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -216,25 +219,60 @@ const Admin = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
+
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-12">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* === LEFT COLUMN: FORM === */}
         <div className="lg:col-span-2">
-          <div className="flex justify-between items-center mb-6">
-            <h1
-              className={`text-2xl font-black uppercase ${editingId ? "text-blue-500" : "text-jzee-green"}`}
-            >
-              {editingId ? "Edit Item" : "Add New Item"}
-            </h1>
-            {editingId && (
-              <button
-                onClick={handleCancelEdit}
-                className="text-xs font-bold text-red-500 border border-red-500 px-2 py-1 hover:bg-red-500 hover:text-white"
+          {/* 👇 NEW HEADER WITH LOGOUT BUTTON */}
+          <div className="flex justify-between items-start mb-6 border-b border-zinc-800 pb-4">
+            <div>
+              <h1
+                className={`text-2xl font-black uppercase ${
+                  editingId ? "text-blue-500" : "text-jzee-green"
+                }`}
               >
-                Cancel
-              </button>
-            )}
+                {editingId ? "Edit Item" : "Add New Item"}
+              </h1>
+              {editingId && (
+                <button
+                  onClick={handleCancelEdit}
+                  className="text-[10px] font-bold text-red-500 border border-red-500 px-2 py-1 hover:bg-red-500 hover:text-white mt-2 uppercase tracking-widest"
+                >
+                  Cancel Edit
+                </button>
+              )}
+            </div>
+
+            {/* 🚪 LOGOUT BUTTON */}
+            <button
+              onClick={handleLogout}
+              className="group flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-zinc-800 hover:border-red-500 hover:bg-red-500/10 transition-all rounded-sm"
+              title="Sign Out"
+            >
+              <span className="hidden sm:block text-[10px] font-bold text-zinc-500 group-hover:text-red-500 uppercase tracking-widest">
+                Logout
+              </span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-4 h-4 text-zinc-500 group-hover:text-red-500"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"
+                />
+              </svg>
+            </button>
           </div>
 
           <form
