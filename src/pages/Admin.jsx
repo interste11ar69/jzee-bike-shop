@@ -103,35 +103,53 @@ const Admin = () => {
       const file = e.target.files[0];
       if (!file) return;
 
+      console.log("1. Starting Upload Process..."); // Debug Log
       setUploading(true);
+
+      // 1. Compress
       const options = {
         maxSizeMB: 0.5,
         maxWidthOrHeight: 1080,
         useWebWorker: true,
       };
       const compressedFile = await imageCompression(file, options);
+      console.log("2. Compression Complete:", compressedFile.size / 1024, "KB");
 
+      // 2. Generate Path
       const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      // 3. Upload to Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from("inventory")
         .upload(filePath, compressedFile);
-      if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage
+      if (uploadError) {
+        console.error("❌ Upload Failed:", uploadError);
+        throw new Error("Storage Upload Failed: " + uploadError.message);
+      }
+      console.log("3. Upload Success:", uploadData);
+
+      // 4. Get the New Link
+      const { data: urlData } = supabase.storage
         .from("inventory")
         .getPublicUrl(filePath);
 
-      setFormData({
-        ...formData,
-        image_url: data.publicUrl,
+      console.log("4. New URL Generated:", urlData.publicUrl);
+
+      // 5. Update State
+      setFormData((prev) => ({
+        ...prev,
+        image_url: urlData.publicUrl,
         image_position: "50% 50%",
-      });
+      }));
+
       setPos({ x: 50, y: 50 });
+      alert("Image Uploaded! Now click 'Update Item' to save.");
     } catch (error) {
-      alert("Error: " + error.message);
+      console.error("Catch Error:", error);
+      alert("CRITICAL ERROR: " + error.message);
     } finally {
       setUploading(false);
     }
