@@ -26,7 +26,7 @@ export const productService = {
     let query = supabase
       .from("products")
       .select("*", { count: "exact" })
-      // 👇 FIX: Add a secondary sort to prevent duplicates/glitches
+      .neq("status", "Hidden")
       .order("created_at", { ascending: false })
       .order("id", { ascending: true })
       .range(from, to);

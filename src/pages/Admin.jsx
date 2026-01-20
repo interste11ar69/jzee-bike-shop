@@ -10,13 +10,13 @@ const Admin = () => {
   const [items, setItems] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
-  const ITEMS_PER_PAGE = 20; // Admin sees more at once
+  const ITEMS_PER_PAGE = 20;
   const [isLoadingList, setIsLoadingList] = useState(false);
 
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // 🧮 HELPER: Convert "50% 50%" string to numbers
+  // 🧮 HELPER
   const parsePosition = (posString) => {
     if (!posString) return { x: 50, y: 50 };
     const parts = posString.split(" ");
@@ -48,7 +48,7 @@ const Admin = () => {
     image_position: "center center",
   });
 
-  // 📡 FETCH ITEMS (Server-Side Pagination + Search)
+  // 📡 FETCH ITEMS (Admin sees EVERYTHING, including Hidden)
   const fetchItems = async (pageIndex = 0, search = "", isReset = false) => {
     setIsLoadingList(true);
 
@@ -61,7 +61,6 @@ const Admin = () => {
       .order("created_at", { ascending: false })
       .range(from, to);
 
-    // Apply Search if exists
     if (search) {
       query = query.ilike("name", `%${search}%`);
     }
@@ -79,20 +78,17 @@ const Admin = () => {
     setIsLoadingList(false);
   };
 
-  // Initial Load
   useEffect(() => {
     fetchItems(0, "", true);
   }, []);
 
-  // 🔍 HANDLE SEARCH (Debounced slightly by user typing speed, but simple here)
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setSearchTerm(val);
-    setPage(0); // Reset page
-    fetchItems(0, val, true); // Reset list
+    setPage(0);
+    fetchItems(0, val, true);
   };
 
-  // 👇 LOAD MORE
   const handleLoadMore = () => {
     const nextPage = page + 1;
     setPage(nextPage);
@@ -201,17 +197,20 @@ const Admin = () => {
     else {
       alert(editingId ? "Item Updated!" : "Item Published!");
       handleCancelEdit();
-      // Refresh list to show changes
       setPage(0);
       fetchItems(0, searchTerm, true);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this item?")) return;
+    if (
+      !window.confirm(
+        "Delete this item? This cannot be undone. Use 'Hidden' status to Archive instead.",
+      )
+    )
+      return;
     const { error } = await supabase.from("products").delete().eq("id", id);
     if (!error) {
-      // Refresh list
       setPage(0);
       fetchItems(0, searchTerm, true);
     }
@@ -353,6 +352,9 @@ const Admin = () => {
                     </button>
                   </div>
                 </div>
+                <p className="text-[10px] text-zinc-500 text-center mt-3 italic">
+                  Tap arrows to adjust image position
+                </p>
               </div>
             )}
 
@@ -381,6 +383,8 @@ const Admin = () => {
                   </option>
                 ))}
               </select>
+
+              {/* 👇 UPDATED STATUS DROPDOWN */}
               <select
                 className="bg-black border border-zinc-700 p-3 text-white outline-none text-sm"
                 value={formData.status}
@@ -393,6 +397,9 @@ const Admin = () => {
                 <option value="Dream Build">Dream Build</option>
                 <option value="Best Seller">Best Seller</option>
                 <option value="Sold Out">Sold Out</option>
+                <option value="Hidden" className="bg-zinc-800 text-zinc-400">
+                  Hidden (Archive)
+                </option>
               </select>
             </div>
             <input
@@ -458,7 +465,12 @@ const Admin = () => {
             {items.map((item) => (
               <div
                 key={item.id}
-                className={`flex gap-3 bg-zinc-900 border p-2 group items-center ${editingId === item.id ? "border-blue-500 bg-zinc-800" : "border-zinc-800 hover:border-zinc-600"}`}
+                // 👇 VISUAL CUE: If Hidden, make it look ghosted
+                className={`flex gap-3 bg-zinc-900 border p-2 group items-center ${
+                  editingId === item.id
+                    ? "border-blue-500 bg-zinc-800"
+                    : "border-zinc-800 hover:border-zinc-600"
+                } ${item.status === "Hidden" ? "opacity-50 grayscale" : ""}`}
               >
                 <img
                   src={item.image_url}
@@ -471,9 +483,16 @@ const Admin = () => {
                   <h4 className="text-white font-bold text-sm uppercase truncate">
                     {item.name}
                   </h4>
-                  <p className="text-jzee-green text-xs font-mono">
-                    {item.display_price}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-jzee-green text-xs font-mono">
+                      {item.display_price}
+                    </p>
+                    {item.status === "Hidden" && (
+                      <span className="text-[9px] bg-zinc-700 text-white px-1 rounded uppercase">
+                        Archived
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-2 pr-2">
                   <button
@@ -492,7 +511,6 @@ const Admin = () => {
               </div>
             ))}
 
-            {/* LOAD MORE BUTTON */}
             {items.length < totalCount && (
               <button
                 onClick={handleLoadMore}

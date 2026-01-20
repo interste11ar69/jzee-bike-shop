@@ -271,11 +271,20 @@ const Catalog = ({ searchTerm }) => {
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-zinc-800">
+                  {/* SMART INQUIRE BUTTON */}
                   <a
-                    href={`https://m.me/100063770933795?text=Hello Jzee Bike shop!, interested ko sa ${selectedItem.name} (${selectedItem.display_price}). Available pa?`}
+                    href={`https://m.me/100063770933795?text=${
+                      selectedItem.status === "Sold Out"
+                        ? `Good day Jzee Bikes, ask unta ko if kanus-a mo mag restock ani: ${selectedItem.name}?`
+                        : `Good day Jzee Bikes, ask unta ko if available pa ang ${selectedItem.name} (${selectedItem.display_price})?`
+                    }`}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center justify-center gap-3 w-full bg-white text-black py-4 font-black uppercase tracking-widest hover:bg-jzee-green transition-all hover:scale-[1.02]"
+                    className={`flex items-center justify-center gap-3 w-full py-4 font-black uppercase tracking-widest transition-all hover:scale-[1.02] ${
+                      selectedItem.status === "Sold Out"
+                        ? "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white" // Grey for Sold Out
+                        : "bg-white text-black hover:bg-jzee-green" // White/Green for Available
+                    }`}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -286,7 +295,9 @@ const Catalog = ({ searchTerm }) => {
                       <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
                       <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
                     </svg>
-                    Inquire Now
+                    {selectedItem.status === "Sold Out"
+                      ? "Inquire Restock"
+                      : "Inquire Now"}
                   </a>
                   <p className="text-center text-zinc-600 text-[9px] uppercase tracking-widest mt-3">
                     Direct Message to Owner

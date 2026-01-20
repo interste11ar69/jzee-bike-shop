@@ -45,6 +45,7 @@ export const PRODUCT_STATUS = {
   BUDGET_KING: "Budget King",
   BEST_SELLER: "Best Seller",
   RESTOCKED: "Restocked",
+  HIDDEN: "Hidden",
 };
 
 // 🌟 SOCIAL PROOF
