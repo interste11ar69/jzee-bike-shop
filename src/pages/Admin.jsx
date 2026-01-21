@@ -2,11 +2,29 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "../api/supabaseClient";
 import { CATEGORIES } from "../model/AppConstants";
 import imageCompression from "browser-image-compression";
-import { useNavigate } from "react-router-dom"; // 👈 Add this
+import { useNavigate } from "react-router-dom";
+// 👇 IMPORT PROFESSIONAL ICONS
+import {
+  Upload,
+  Trash2,
+  Edit,
+  LogOut,
+  Search,
+  ArrowUpLeft,
+  ArrowUp,
+  ArrowUpRight,
+  ArrowLeft,
+  Circle,
+  ArrowRight,
+  ArrowDownLeft,
+  ArrowDown,
+  ArrowDownRight,
+  Image as ImageIcon,
+  Loader2,
+} from "lucide-react";
 
 const Admin = () => {
   const [uploading, setUploading] = useState(false);
-  //logout
   const navigate = useNavigate();
 
   // 📦 DATA STATE
@@ -51,7 +69,7 @@ const Admin = () => {
     image_position: "center center",
   });
 
-  // 📡 FETCH ITEMS (Admin sees EVERYTHING, including Hidden)
+  // 📡 FETCH ITEMS
   const fetchItems = async (pageIndex = 0, search = "", isReset = false) => {
     setIsLoadingList(true);
 
@@ -81,16 +99,20 @@ const Admin = () => {
     setIsLoadingList(false);
   };
 
+  // 🔄 INITIAL LOAD
   useEffect(() => {
     fetchItems(0, "", true);
   }, []);
 
-  const handleSearchChange = (e) => {
-    const val = e.target.value;
-    setSearchTerm(val);
-    setPage(0);
-    fetchItems(0, val, true);
-  };
+  // 🕵️‍♂️ DEBOUNCED SEARCH (The Fix for Vercel)
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      setPage(0);
+      fetchItems(0, searchTerm, true);
+    }, 500); // Wait 500ms after typing stops
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
 
   const handleLoadMore = () => {
     const nextPage = page + 1;
@@ -103,53 +125,38 @@ const Admin = () => {
       const file = e.target.files[0];
       if (!file) return;
 
-      console.log("1. Starting Upload Process..."); // Debug Log
       setUploading(true);
+      const imageCompression = (await import("browser-image-compression"))
+        .default;
 
-      // 1. Compress
       const options = {
         maxSizeMB: 0.5,
         maxWidthOrHeight: 1080,
         useWebWorker: true,
       };
       const compressedFile = await imageCompression(file, options);
-      console.log("2. Compression Complete:", compressedFile.size / 1024, "KB");
 
-      // 2. Generate Path
       const fileExt = file.name.split(".").pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      // 3. Upload to Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("inventory")
         .upload(filePath, compressedFile);
+      if (uploadError) throw uploadError;
 
-      if (uploadError) {
-        console.error("❌ Upload Failed:", uploadError);
-        throw new Error("Storage Upload Failed: " + uploadError.message);
-      }
-      console.log("3. Upload Success:", uploadData);
-
-      // 4. Get the New Link
-      const { data: urlData } = supabase.storage
+      const { data } = supabase.storage
         .from("inventory")
         .getPublicUrl(filePath);
 
-      console.log("4. New URL Generated:", urlData.publicUrl);
-
-      // 5. Update State
       setFormData((prev) => ({
         ...prev,
-        image_url: urlData.publicUrl,
+        image_url: data.publicUrl,
         image_position: "50% 50%",
       }));
-
       setPos({ x: 50, y: 50 });
-      alert("Image Uploaded! Now click 'Update Item' to save.");
     } catch (error) {
-      console.error("Catch Error:", error);
-      alert("CRITICAL ERROR: " + error.message);
+      alert("Error: " + error.message);
     } finally {
       setUploading(false);
     }
@@ -223,17 +230,21 @@ const Admin = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (
-      !window.confirm(
-        "Delete this item? This cannot be undone. Use 'Hidden' status to Archive instead.",
-      )
-    )
-      return;
-    const { error } = await supabase.from("products").delete().eq("id", id);
-    if (!error) {
-      setPage(0);
-      fetchItems(0, searchTerm, true);
+  const handleDelete = async (id, imageUrl) => {
+    if (!window.confirm("Delete this item?")) return;
+
+    try {
+      if (imageUrl && imageUrl.startsWith("http")) {
+        const fileName = imageUrl.split("/").pop();
+        await supabase.storage.from("inventory").remove([fileName]);
+      }
+      const { error } = await supabase.from("products").delete().eq("id", id);
+      if (!error) {
+        setPage(0);
+        fetchItems(0, searchTerm, true);
+      }
+    } catch (err) {
+      alert("Error deleting: " + err.message);
     }
   };
 
@@ -247,13 +258,10 @@ const Admin = () => {
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* === LEFT COLUMN: FORM === */}
         <div className="lg:col-span-2">
-          {/* 👇 NEW HEADER WITH LOGOUT BUTTON */}
           <div className="flex justify-between items-start mb-6 border-b border-zinc-800 pb-4">
             <div>
               <h1
-                className={`text-2xl font-black uppercase ${
-                  editingId ? "text-blue-500" : "text-jzee-green"
-                }`}
+                className={`text-2xl font-black uppercase ${editingId ? "text-blue-500" : "text-jzee-green"}`}
               >
                 {editingId ? "Edit Item" : "Add New Item"}
               </h1>
@@ -266,8 +274,6 @@ const Admin = () => {
                 </button>
               )}
             </div>
-
-            {/* 🚪 LOGOUT BUTTON */}
             <button
               onClick={handleLogout}
               className="group flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-zinc-800 hover:border-red-500 hover:bg-red-500/10 transition-all rounded-sm"
@@ -276,20 +282,7 @@ const Admin = () => {
               <span className="hidden sm:block text-[10px] font-bold text-zinc-500 group-hover:text-red-500 uppercase tracking-widest">
                 Logout
               </span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-4 h-4 text-zinc-500 group-hover:text-red-500"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"
-                />
-              </svg>
+              <LogOut className="w-4 h-4 text-zinc-500 group-hover:text-red-500" />
             </button>
           </div>
 
@@ -309,8 +302,8 @@ const Admin = () => {
                   />
                 </div>
               ) : (
-                <div className="aspect-square flex flex-col items-center justify-center text-zinc-500 text-xs font-bold uppercase bg-zinc-900">
-                  <span className="text-4xl mb-2">📷</span>
+                <div className="aspect-square flex flex-col items-center justify-center text-zinc-500 text-xs font-bold uppercase bg-zinc-900 gap-2">
+                  <ImageIcon className="w-8 h-8 opacity-50" />
                   <span>Tap to Select Image</span>
                 </div>
               )}
@@ -322,7 +315,8 @@ const Admin = () => {
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
               {uploading && (
-                <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-20">
+                <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-20 gap-2">
+                  <Loader2 className="w-6 h-6 text-jzee-green animate-spin" />
                   <span className="text-jzee-green text-xs font-bold animate-pulse">
                     Compressing...
                   </span>
@@ -348,69 +342,68 @@ const Admin = () => {
                       onClick={() => nudge(-10, -10)}
                       className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-zinc-400 rounded-sm flex items-center justify-center"
                     >
-                      ↖
+                      <ArrowUpLeft className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => nudge(0, -10)}
                       className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-white rounded-sm flex items-center justify-center"
                     >
-                      ⬆
+                      <ArrowUp className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => nudge(10, -10)}
                       className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-zinc-400 rounded-sm flex items-center justify-center"
                     >
-                      ↗
+                      <ArrowUpRight className="w-4 h-4" />
                     </button>
+
                     <button
                       type="button"
                       onClick={() => nudge(-10, 0)}
                       className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-white rounded-sm flex items-center justify-center"
                     >
-                      ⬅
+                      <ArrowLeft className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => nudge(0, 0)}
                       className="w-10 h-10 bg-jzee-green text-black font-black border border-jzee-green hover:brightness-110 rounded-full flex items-center justify-center"
                     >
-                      •
+                      <Circle className="w-3 h-3 fill-current" />
                     </button>
                     <button
                       type="button"
                       onClick={() => nudge(10, 0)}
                       className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-white rounded-sm flex items-center justify-center"
                     >
-                      ➡
+                      <ArrowRight className="w-4 h-4" />
                     </button>
+
                     <button
                       type="button"
                       onClick={() => nudge(-10, 10)}
                       className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-zinc-400 rounded-sm flex items-center justify-center"
                     >
-                      ↙
+                      <ArrowDownLeft className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => nudge(0, 10)}
                       className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-white rounded-sm flex items-center justify-center"
                     >
-                      ⬇
+                      <ArrowDown className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => nudge(10, 10)}
                       className="w-10 h-10 bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 hover:border-white text-zinc-400 rounded-sm flex items-center justify-center"
                     >
-                      ↘
+                      <ArrowDownRight className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-                <p className="text-[10px] text-zinc-500 text-center mt-3 italic">
-                  Tap arrows to adjust image position
-                </p>
               </div>
             )}
 
@@ -439,8 +432,6 @@ const Admin = () => {
                   </option>
                 ))}
               </select>
-
-              {/* 👇 UPDATED STATUS DROPDOWN */}
               <select
                 className="bg-black border border-zinc-700 p-3 text-white outline-none text-sm"
                 value={formData.status}
@@ -471,10 +462,15 @@ const Admin = () => {
             <button
               type="submit"
               disabled={uploading}
-              className={`w-full font-black uppercase py-4 tracking-widest transition-colors ${editingId ? "bg-blue-600 hover:bg-blue-500" : "bg-white text-black hover:bg-jzee-green"}`}
+              className={`w-full font-black uppercase py-4 tracking-widest transition-colors flex items-center justify-center gap-2 ${editingId ? "bg-blue-600 hover:bg-blue-500" : "bg-white text-black hover:bg-jzee-green"}`}
             >
+              {uploading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Upload className="w-4 h-4" />
+              )}
               {uploading
-                ? "Wait..."
+                ? "Processing..."
                 : editingId
                   ? "Update Item"
                   : "Publish Item"}
@@ -497,22 +493,9 @@ const Admin = () => {
                 placeholder="SEARCH ITEMS..."
                 className="w-full bg-black border border-zinc-700 p-3 pl-10 text-white text-xs font-bold uppercase tracking-widest focus:border-jzee-green outline-none transition-colors placeholder-zinc-600"
                 value={searchTerm}
-                onChange={handleSearchChange}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-                />
-              </svg>
+              <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
             </div>
           </div>
 
@@ -521,12 +504,7 @@ const Admin = () => {
             {items.map((item) => (
               <div
                 key={item.id}
-                // 👇 VISUAL CUE: If Hidden, make it look ghosted
-                className={`flex gap-3 bg-zinc-900 border p-2 group items-center ${
-                  editingId === item.id
-                    ? "border-blue-500 bg-zinc-800"
-                    : "border-zinc-800 hover:border-zinc-600"
-                } ${item.status === "Hidden" ? "opacity-50 grayscale" : ""}`}
+                className={`flex gap-3 bg-zinc-900 border p-2 group items-center ${editingId === item.id ? "border-blue-500 bg-zinc-800" : "border-zinc-800 hover:border-zinc-600"} ${item.status === "Hidden" ? "opacity-50 grayscale" : ""}`}
               >
                 <img
                   src={item.image_url}
@@ -553,15 +531,15 @@ const Admin = () => {
                 <div className="flex gap-2 pr-2">
                   <button
                     onClick={() => handleEdit(item)}
-                    className="p-2 text-zinc-500 hover:text-blue-400"
+                    className="p-2 text-zinc-500 hover:text-blue-400 hover:bg-zinc-800 rounded transition-colors"
                   >
-                    ✏️
+                    <Edit className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(item.id)}
-                    className="p-2 text-zinc-500 hover:text-red-500"
+                    onClick={() => handleDelete(item.id, item.image_url)}
+                    className="p-2 text-zinc-500 hover:text-red-500 hover:bg-zinc-800 rounded transition-colors"
                   >
-                    🗑️
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -571,11 +549,13 @@ const Admin = () => {
               <button
                 onClick={handleLoadMore}
                 disabled={isLoadingList}
-                className="w-full py-3 bg-zinc-800 text-zinc-400 text-xs font-bold uppercase tracking-widest hover:bg-zinc-700 hover:text-white transition-colors mt-4"
+                className="w-full py-3 bg-zinc-800 text-zinc-400 text-xs font-bold uppercase tracking-widest hover:bg-zinc-700 hover:text-white transition-colors mt-4 flex items-center justify-center gap-2"
               >
-                {isLoadingList
-                  ? "Loading..."
-                  : `Load More (${totalCount - items.length} remaining)`}
+                {isLoadingList ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  `Load More (${totalCount - items.length} remaining)`
+                )}
               </button>
             )}
           </div>
